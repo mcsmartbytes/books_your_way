@@ -14,6 +14,7 @@ interface Vendor {
   city: string;
   state: string;
   zip: string;
+  tax_id: string;
   balance: number;
   created_at: string;
 }
@@ -22,6 +23,7 @@ export default function VendorsPage() {
   const [vendors, setVendors] = useState<Vendor[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editingVendor, setEditingVendor] = useState<Vendor | null>(null);
   const [formData, setFormData] = useState({
@@ -33,6 +35,7 @@ export default function VendorsPage() {
     city: '',
     state: '',
     zip: '',
+    tax_id: '',
   });
 
   useEffect(() => {
@@ -43,34 +46,48 @@ export default function VendorsPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    // Mock data for now
-    const mockVendors: Vendor[] = [
-      { id: '1', name: 'Office Supplies Co', email: 'orders@officesupplies.com', phone: '(555) 111-2222', company: 'Office Supplies Co', address: '100 Supply Way', city: 'Dallas', state: 'TX', zip: '75201', balance: 450.00, created_at: '2024-10-01' },
-      { id: '2', name: 'Cloud Services Inc', email: 'billing@cloudservices.com', phone: '(555) 222-3333', company: 'Cloud Services Inc', address: '200 Cloud Ave', city: 'Seattle', state: 'WA', zip: '98101', balance: 1200.00, created_at: '2024-10-15' },
-      { id: '3', name: 'Marketing Agency Pro', email: 'accounts@marketingpro.com', phone: '(555) 333-4444', company: 'Marketing Agency Pro', address: '300 Brand St', city: 'New York', state: 'NY', zip: '10002', balance: 5500.00, created_at: '2024-11-01' },
-      { id: '4', name: 'Insurance Partners', email: 'premiums@insurancepartners.com', phone: '(555) 444-5555', company: 'Insurance Partners LLC', address: '400 Coverage Blvd', city: 'Hartford', state: 'CT', zip: '06101', balance: 0, created_at: '2024-11-10' },
-      { id: '5', name: 'Utility Company', email: 'business@utilityco.com', phone: '(555) 555-6666', company: 'Metro Utility Co', address: '500 Power St', city: 'Phoenix', state: 'AZ', zip: '85001', balance: 350.00, created_at: '2024-11-15' },
-    ];
-    setVendors(mockVendors);
+    const { data, error } = await supabase
+      .from('vendors')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('name');
+
+    if (!error && data) {
+      setVendors(data);
+    }
     setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
     if (editingVendor) {
-      setVendors(vendors.map(v =>
-        v.id === editingVendor.id
-          ? { ...v, ...formData }
-          : v
-      ));
+      const { error } = await supabase
+        .from('vendors')
+        .update(formData)
+        .eq('id', editingVendor.id);
+
+      if (!error) {
+        setVendors(vendors.map(v =>
+          v.id === editingVendor.id ? { ...v, ...formData } : v
+        ));
+      }
     } else {
-      const newVendor: Vendor = {
-        id: String(Date.now()),
-        ...formData,
-        balance: 0,
-        created_at: new Date().toISOString().split('T')[0],
-      };
-      setVendors([newVendor, ...vendors]);
+      const { data, error } = await supabase
+        .from('vendors')
+        .insert({
+          user_id: session.user.id,
+          ...formData,
+          balance: 0,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setVendors([data, ...vendors].sort((a, b) => a.name.localeCompare(b.name)));
+      }
     }
     closeModal();
   };
@@ -81,12 +98,13 @@ export default function VendorsPage() {
       setFormData({
         name: vendor.name,
         email: vendor.email,
-        phone: vendor.phone,
-        company: vendor.company,
-        address: vendor.address,
-        city: vendor.city,
-        state: vendor.state,
-        zip: vendor.zip,
+        phone: vendor.phone || '',
+        company: vendor.company || '',
+        address: vendor.address || '',
+        city: vendor.city || '',
+        state: vendor.state || '',
+        zip: vendor.zip || '',
+        tax_id: vendor.tax_id || '',
       });
     } else {
       setEditingVendor(null);
@@ -99,6 +117,7 @@ export default function VendorsPage() {
         city: '',
         state: '',
         zip: '',
+        tax_id: '',
       });
     }
     setShowModal(true);
@@ -116,11 +135,19 @@ export default function VendorsPage() {
       city: '',
       state: '',
       zip: '',
+      tax_id: '',
     });
   };
 
-  const deleteVendor = (id: string) => {
-    if (confirm('Are you sure you want to delete this vendor?')) {
+  const deleteVendor = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this vendor?')) return;
+
+    const { error } = await supabase
+      .from('vendors')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
       setVendors(vendors.filter(v => v.id !== id));
     }
   };
@@ -129,14 +156,23 @@ export default function VendorsPage() {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(amount);
+    }).format(amount || 0);
   };
 
-  const filteredVendors = vendors.filter(vendor =>
-    vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    vendor.company.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredVendors = vendors.filter(vendor => {
+    const matchesSearch =
+      vendor.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      vendor.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (vendor.company && vendor.company.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesFilter =
+      filter === 'all' ||
+      (filter === 'balance' && (vendor.balance || 0) > 0) ||
+      (filter === 'no-balance' && (vendor.balance || 0) === 0) ||
+      (filter === '1099' && vendor.tax_id);
+
+    return matchesSearch && matchesFilter;
+  });
 
   if (loading) {
     return (
@@ -180,116 +216,156 @@ export default function VendorsPage() {
               className="input-field pl-10"
             />
           </div>
-          <select className="input-field w-auto">
+          <select
+            value={filter}
+            onChange={(e) => setFilter(e.target.value)}
+            className="input-field w-auto"
+          >
             <option value="all">All Vendors</option>
             <option value="balance">With Balance</option>
             <option value="no-balance">Paid Up</option>
+            <option value="1099">1099 Vendors</option>
           </select>
         </div>
       </div>
 
       {/* Vendors table */}
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Vendor</th>
-                <th>Contact</th>
-                <th>Location</th>
-                <th className="text-right">Balance Owed</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredVendors.length === 0 ? (
+        {vendors.length === 0 ? (
+          <div className="text-center py-12">
+            <svg className="w-12 h-12 mx-auto text-corporate-gray mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+            </svg>
+            <p className="text-corporate-gray mb-4">No vendors yet</p>
+            <button onClick={() => openModal()} className="btn-primary">
+              Add Your First Vendor
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-corporate-gray">
-                    No vendors found
-                  </td>
+                  <th>Vendor</th>
+                  <th>Contact</th>
+                  <th>Location</th>
+                  <th className="text-right">Balance Owed</th>
+                  <th className="text-right">Actions</th>
                 </tr>
-              ) : (
-                filteredVendors.map((vendor) => (
-                  <tr key={vendor.id}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
-                          <span className="text-orange-600 font-semibold">
-                            {vendor.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-corporate-dark">{vendor.name}</p>
-                          <p className="text-xs text-corporate-gray">{vendor.company}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p className="text-corporate-slate">{vendor.email}</p>
-                      <p className="text-xs text-corporate-gray">{vendor.phone}</p>
-                    </td>
-                    <td>
-                      <p className="text-corporate-slate">{vendor.city}, {vendor.state}</p>
-                      <p className="text-xs text-corporate-gray">{vendor.zip}</p>
-                    </td>
-                    <td className="text-right">
-                      <span className={`font-semibold ${vendor.balance > 0 ? 'text-red-600' : 'text-green-600'}`}>
-                        {formatCurrency(vendor.balance)}
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/dashboard/bills/new?vendor=${vendor.id}`}
-                          className="p-2 text-corporate-gray hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
-                          title="Create Bill"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
-                          </svg>
-                        </Link>
-                        <button
-                          onClick={() => openModal(vendor)}
-                          className="p-2 text-corporate-gray hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => deleteVendor(vendor.id)}
-                          className="p-2 text-corporate-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {filteredVendors.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-8 text-corporate-gray">
+                      No vendors found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredVendors.map((vendor) => (
+                    <tr key={vendor.id}>
+                      <td>
+                        <Link href={`/dashboard/vendors/${vendor.id}`} className="flex items-center gap-3 hover:opacity-80">
+                          <div className="w-10 h-10 bg-orange-100 rounded-full flex items-center justify-center">
+                            <span className="text-orange-600 font-semibold">
+                              {vendor.name.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <p className="font-medium text-orange-600 hover:underline">{vendor.name}</p>
+                              {vendor.tax_id && (
+                                <span className="text-xs bg-yellow-100 text-yellow-700 px-1.5 py-0.5 rounded">1099</span>
+                              )}
+                            </div>
+                            <p className="text-xs text-corporate-gray">{vendor.company || 'Individual'}</p>
+                          </div>
+                        </Link>
+                      </td>
+                      <td>
+                        <p className="text-corporate-slate">{vendor.email}</p>
+                        <p className="text-xs text-corporate-gray">{vendor.phone || '-'}</p>
+                      </td>
+                      <td>
+                        <p className="text-corporate-slate">
+                          {vendor.city && vendor.state
+                            ? `${vendor.city}, ${vendor.state}`
+                            : vendor.city || vendor.state || '-'}
+                        </p>
+                        <p className="text-xs text-corporate-gray">{vendor.zip || ''}</p>
+                      </td>
+                      <td className="text-right">
+                        <span className={`font-semibold ${(vendor.balance || 0) > 0 ? 'text-red-600' : 'text-green-600'}`}>
+                          {formatCurrency(vendor.balance || 0)}
+                        </span>
+                      </td>
+                      <td className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/dashboard/vendors/${vendor.id}`}
+                            className="p-2 text-corporate-gray hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </Link>
+                          <Link
+                            href={`/dashboard/bills/new?vendor=${vendor.id}`}
+                            className="p-2 text-corporate-gray hover:text-orange-600 hover:bg-orange-50 rounded-lg transition-colors"
+                            title="Create Bill"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z" />
+                            </svg>
+                          </Link>
+                          <button
+                            onClick={() => openModal(vendor)}
+                            className="p-2 text-corporate-gray hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => deleteVendor(vendor.id)}
+                            className="p-2 text-corporate-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Summary */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div className="grid grid-cols-1 sm:grid-cols-4 gap-4">
         <div className="stat-card">
           <p className="text-sm text-corporate-gray">Total Vendors</p>
           <p className="text-2xl font-bold text-corporate-dark">{vendors.length}</p>
         </div>
         <div className="stat-card">
           <p className="text-sm text-corporate-gray">With Balance</p>
-          <p className="text-2xl font-bold text-red-600">{vendors.filter(v => v.balance > 0).length}</p>
+          <p className="text-2xl font-bold text-red-600">{vendors.filter(v => (v.balance || 0) > 0).length}</p>
+        </div>
+        <div className="stat-card">
+          <p className="text-sm text-corporate-gray">1099 Vendors</p>
+          <p className="text-2xl font-bold text-yellow-600">{vendors.filter(v => v.tax_id).length}</p>
         </div>
         <div className="stat-card">
           <p className="text-sm text-corporate-gray">Total Owed</p>
           <p className="text-2xl font-bold text-corporate-dark">
-            {formatCurrency(vendors.reduce((sum, v) => sum + v.balance, 0))}
+            {formatCurrency(vendors.reduce((sum, v) => sum + (v.balance || 0), 0))}
           </p>
         </div>
       </div>
@@ -351,6 +427,17 @@ export default function VendorsPage() {
                     className="input-field"
                     placeholder="(555) 123-4567"
                   />
+                </div>
+                <div className="col-span-2">
+                  <label className="label">Tax ID (for 1099 reporting)</label>
+                  <input
+                    type="text"
+                    value={formData.tax_id}
+                    onChange={(e) => setFormData({ ...formData, tax_id: e.target.value })}
+                    className="input-field"
+                    placeholder="XX-XXXXXXX"
+                  />
+                  <p className="text-xs text-corporate-gray mt-1">Required for vendors paid $600+ annually</p>
                 </div>
                 <div className="col-span-2">
                   <label className="label">Address</label>

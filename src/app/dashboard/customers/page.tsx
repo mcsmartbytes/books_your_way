@@ -22,6 +22,7 @@ export default function CustomersPage() {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
+  const [filter, setFilter] = useState('all');
   const [showModal, setShowModal] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [formData, setFormData] = useState({
@@ -43,36 +44,48 @@ export default function CustomersPage() {
     const { data: { session } } = await supabase.auth.getSession();
     if (!session) return;
 
-    // For now, use mock data since tables don't exist yet
-    // In production, this would be a Supabase query
-    const mockCustomers: Customer[] = [
-      { id: '1', name: 'John Smith', email: 'john@acmecorp.com', phone: '(555) 123-4567', company: 'Acme Corp', address: '123 Main St', city: 'New York', state: 'NY', zip: '10001', balance: 5250.00, created_at: '2024-11-01' },
-      { id: '2', name: 'Sarah Johnson', email: 'sarah@techsolutions.com', phone: '(555) 234-5678', company: 'Tech Solutions Inc', address: '456 Tech Blvd', city: 'San Francisco', state: 'CA', zip: '94102', balance: 3200.00, created_at: '2024-11-05' },
-      { id: '3', name: 'Michael Brown', email: 'michael@innovate.io', phone: '(555) 345-6789', company: 'Innovate.io', address: '789 Innovation Way', city: 'Austin', state: 'TX', zip: '78701', balance: 0, created_at: '2024-11-10' },
-      { id: '4', name: 'Emily Davis', email: 'emily@designco.com', phone: '(555) 456-7890', company: 'Design Co', address: '321 Creative St', city: 'Los Angeles', state: 'CA', zip: '90001', balance: 1500.00, created_at: '2024-11-15' },
-      { id: '5', name: 'Robert Wilson', email: 'robert@globalservices.com', phone: '(555) 567-8901', company: 'Global Services LLC', address: '555 Enterprise Ave', city: 'Chicago', state: 'IL', zip: '60601', balance: 8750.00, created_at: '2024-11-20' },
-    ];
-    setCustomers(mockCustomers);
+    const { data, error } = await supabase
+      .from('customers')
+      .select('*')
+      .eq('user_id', session.user.id)
+      .order('name');
+
+    if (!error && data) {
+      setCustomers(data);
+    }
     setLoading(false);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // In production, this would save to Supabase
+    const { data: { session } } = await supabase.auth.getSession();
+    if (!session) return;
+
     if (editingCustomer) {
-      setCustomers(customers.map(c =>
-        c.id === editingCustomer.id
-          ? { ...c, ...formData }
-          : c
-      ));
+      const { error } = await supabase
+        .from('customers')
+        .update(formData)
+        .eq('id', editingCustomer.id);
+
+      if (!error) {
+        setCustomers(customers.map(c =>
+          c.id === editingCustomer.id ? { ...c, ...formData } : c
+        ));
+      }
     } else {
-      const newCustomer: Customer = {
-        id: String(Date.now()),
-        ...formData,
-        balance: 0,
-        created_at: new Date().toISOString().split('T')[0],
-      };
-      setCustomers([newCustomer, ...customers]);
+      const { data, error } = await supabase
+        .from('customers')
+        .insert({
+          user_id: session.user.id,
+          ...formData,
+          balance: 0,
+        })
+        .select()
+        .single();
+
+      if (!error && data) {
+        setCustomers([data, ...customers].sort((a, b) => a.name.localeCompare(b.name)));
+      }
     }
     closeModal();
   };
@@ -83,12 +96,12 @@ export default function CustomersPage() {
       setFormData({
         name: customer.name,
         email: customer.email,
-        phone: customer.phone,
-        company: customer.company,
-        address: customer.address,
-        city: customer.city,
-        state: customer.state,
-        zip: customer.zip,
+        phone: customer.phone || '',
+        company: customer.company || '',
+        address: customer.address || '',
+        city: customer.city || '',
+        state: customer.state || '',
+        zip: customer.zip || '',
       });
     } else {
       setEditingCustomer(null);
@@ -121,8 +134,15 @@ export default function CustomersPage() {
     });
   };
 
-  const deleteCustomer = (id: string) => {
-    if (confirm('Are you sure you want to delete this customer?')) {
+  const deleteCustomer = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this customer?')) return;
+
+    const { error } = await supabase
+      .from('customers')
+      .delete()
+      .eq('id', id);
+
+    if (!error) {
       setCustomers(customers.filter(c => c.id !== id));
     }
   };
@@ -131,14 +151,22 @@ export default function CustomersPage() {
     return new Intl.NumberFormat('en-US', {
       style: 'currency',
       currency: 'USD',
-    }).format(amount);
+    }).format(amount || 0);
   };
 
-  const filteredCustomers = customers.filter(customer =>
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.company.toLowerCase().includes(searchTerm.toLowerCase())
-  );
+  const filteredCustomers = customers.filter(customer => {
+    const matchesSearch =
+      customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      customer.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (customer.company && customer.company.toLowerCase().includes(searchTerm.toLowerCase()));
+
+    const matchesFilter =
+      filter === 'all' ||
+      (filter === 'balance' && (customer.balance || 0) > 0) ||
+      (filter === 'no-balance' && (customer.balance || 0) === 0);
+
+    return matchesSearch && matchesFilter;
+  });
 
   if (loading) {
     return (
@@ -183,7 +211,11 @@ export default function CustomersPage() {
             />
           </div>
           <div className="flex gap-2">
-            <select className="input-field w-auto">
+            <select
+              value={filter}
+              onChange={(e) => setFilter(e.target.value)}
+              className="input-field w-auto"
+            >
               <option value="all">All Customers</option>
               <option value="balance">With Balance</option>
               <option value="no-balance">No Balance</option>
@@ -194,90 +226,116 @@ export default function CustomersPage() {
 
       {/* Customers table */}
       <div className="card overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="data-table">
-            <thead>
-              <tr>
-                <th>Customer</th>
-                <th>Contact</th>
-                <th>Location</th>
-                <th className="text-right">Balance</th>
-                <th className="text-right">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-              {filteredCustomers.length === 0 ? (
+        {customers.length === 0 ? (
+          <div className="text-center py-12">
+            <svg className="w-12 h-12 mx-auto text-corporate-gray mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+            </svg>
+            <p className="text-corporate-gray mb-4">No customers yet</p>
+            <button onClick={() => openModal()} className="btn-primary">
+              Add Your First Customer
+            </button>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="data-table">
+              <thead>
                 <tr>
-                  <td colSpan={5} className="text-center py-8 text-corporate-gray">
-                    No customers found
-                  </td>
+                  <th>Customer</th>
+                  <th>Contact</th>
+                  <th>Location</th>
+                  <th className="text-right">Balance</th>
+                  <th className="text-right">Actions</th>
                 </tr>
-              ) : (
-                filteredCustomers.map((customer) => (
-                  <tr key={customer.id}>
-                    <td>
-                      <div className="flex items-center gap-3">
-                        <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
-                          <span className="text-primary-600 font-semibold">
-                            {customer.name.charAt(0)}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-corporate-dark">{customer.name}</p>
-                          <p className="text-xs text-corporate-gray">{customer.company}</p>
-                        </div>
-                      </div>
-                    </td>
-                    <td>
-                      <p className="text-corporate-slate">{customer.email}</p>
-                      <p className="text-xs text-corporate-gray">{customer.phone}</p>
-                    </td>
-                    <td>
-                      <p className="text-corporate-slate">{customer.city}, {customer.state}</p>
-                      <p className="text-xs text-corporate-gray">{customer.zip}</p>
-                    </td>
-                    <td className="text-right">
-                      <span className={`font-semibold ${customer.balance > 0 ? 'text-amber-600' : 'text-green-600'}`}>
-                        {formatCurrency(customer.balance)}
-                      </span>
-                    </td>
-                    <td className="text-right">
-                      <div className="flex items-center justify-end gap-2">
-                        <Link
-                          href={`/dashboard/invoices/new?customer=${customer.id}`}
-                          className="p-2 text-corporate-gray hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                          title="Create Invoice"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                          </svg>
-                        </Link>
-                        <button
-                          onClick={() => openModal(customer)}
-                          className="p-2 text-corporate-gray hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
-                          title="Edit"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-                          </svg>
-                        </button>
-                        <button
-                          onClick={() => deleteCustomer(customer.id)}
-                          className="p-2 text-corporate-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                          title="Delete"
-                        >
-                          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
-                          </svg>
-                        </button>
-                      </div>
+              </thead>
+              <tbody>
+                {filteredCustomers.length === 0 ? (
+                  <tr>
+                    <td colSpan={5} className="text-center py-8 text-corporate-gray">
+                      No customers found
                     </td>
                   </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                ) : (
+                  filteredCustomers.map((customer) => (
+                    <tr key={customer.id}>
+                      <td>
+                        <Link href={`/dashboard/customers/${customer.id}`} className="flex items-center gap-3 hover:opacity-80">
+                          <div className="w-10 h-10 bg-primary-100 rounded-full flex items-center justify-center">
+                            <span className="text-primary-600 font-semibold">
+                              {customer.name.charAt(0)}
+                            </span>
+                          </div>
+                          <div>
+                            <p className="font-medium text-primary-600 hover:underline">{customer.name}</p>
+                            <p className="text-xs text-corporate-gray">{customer.company || 'Individual'}</p>
+                          </div>
+                        </Link>
+                      </td>
+                      <td>
+                        <p className="text-corporate-slate">{customer.email}</p>
+                        <p className="text-xs text-corporate-gray">{customer.phone || '-'}</p>
+                      </td>
+                      <td>
+                        <p className="text-corporate-slate">
+                          {customer.city && customer.state
+                            ? `${customer.city}, ${customer.state}`
+                            : customer.city || customer.state || '-'}
+                        </p>
+                        <p className="text-xs text-corporate-gray">{customer.zip || ''}</p>
+                      </td>
+                      <td className="text-right">
+                        <span className={`font-semibold ${(customer.balance || 0) > 0 ? 'text-amber-600' : 'text-green-600'}`}>
+                          {formatCurrency(customer.balance || 0)}
+                        </span>
+                      </td>
+                      <td className="text-right">
+                        <div className="flex items-center justify-end gap-2">
+                          <Link
+                            href={`/dashboard/customers/${customer.id}`}
+                            className="p-2 text-corporate-gray hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="View Details"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+                            </svg>
+                          </Link>
+                          <Link
+                            href={`/dashboard/invoices/new?customer=${customer.id}`}
+                            className="p-2 text-corporate-gray hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Create Invoice"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                            </svg>
+                          </Link>
+                          <button
+                            onClick={() => openModal(customer)}
+                            className="p-2 text-corporate-gray hover:text-primary-600 hover:bg-primary-50 rounded-lg transition-colors"
+                            title="Edit"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+                            </svg>
+                          </button>
+                          <button
+                            onClick={() => deleteCustomer(customer.id)}
+                            className="p-2 text-corporate-gray hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                            title="Delete"
+                          >
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                            </svg>
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
 
       {/* Summary */}
@@ -288,12 +346,12 @@ export default function CustomersPage() {
         </div>
         <div className="stat-card">
           <p className="text-sm text-corporate-gray">With Balance</p>
-          <p className="text-2xl font-bold text-amber-600">{customers.filter(c => c.balance > 0).length}</p>
+          <p className="text-2xl font-bold text-amber-600">{customers.filter(c => (c.balance || 0) > 0).length}</p>
         </div>
         <div className="stat-card">
           <p className="text-sm text-corporate-gray">Total Outstanding</p>
           <p className="text-2xl font-bold text-corporate-dark">
-            {formatCurrency(customers.reduce((sum, c) => sum + c.balance, 0))}
+            {formatCurrency(customers.reduce((sum, c) => sum + (c.balance || 0), 0))}
           </p>
         </div>
       </div>
