@@ -20,6 +20,13 @@ interface ProductService {
   price: number;
 }
 
+interface Job {
+  id: string;
+  job_number: string;
+  name: string;
+  customer_id: string;
+}
+
 interface LineItem {
   id: string;
   product_service_id: string | null;
@@ -34,7 +41,9 @@ export default function NewInvoicePage() {
   const [loading, setLoading] = useState(false);
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [products, setProducts] = useState<ProductService[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
   const [selectedCustomer, setSelectedCustomer] = useState<Customer | null>(null);
+  const [selectedJob, setSelectedJob] = useState<Job | null>(null);
   const [customerSearch, setCustomerSearch] = useState('');
   const [showCustomerDropdown, setShowCustomerDropdown] = useState(false);
   const [productSearches, setProductSearches] = useState<Record<string, string>>({});
@@ -90,6 +99,16 @@ export default function NewInvoicePage() {
 
     setProducts(productsData || []);
 
+    // Load jobs
+    const { data: jobsData } = await supabase
+      .from('jobs')
+      .select('id, job_number, name, customer_id')
+      .eq('user_id', session.user.id)
+      .in('status', ['not_started', 'in_progress'])
+      .order('job_number');
+
+    setJobs(jobsData || []);
+
     // Check if customer ID is in URL
     const customerId = searchParams.get('customer');
     if (customerId && customersData) {
@@ -105,7 +124,16 @@ export default function NewInvoicePage() {
     setSelectedCustomer(customer);
     setCustomerSearch(customer.name);
     setShowCustomerDropdown(false);
+    // Reset job if customer changes and job doesn't belong to new customer
+    if (selectedJob && selectedJob.customer_id !== customer.id) {
+      setSelectedJob(null);
+    }
   };
+
+  // Filter jobs by selected customer
+  const customerJobs = selectedCustomer
+    ? jobs.filter(j => j.customer_id === selectedCustomer.id)
+    : [];
 
   const selectProduct = (itemId: string, product: ProductService) => {
     setLineItems(lineItems.map(item =>
@@ -175,6 +203,7 @@ export default function NewInvoicePage() {
       .insert({
         user_id: session.user.id,
         customer_id: selectedCustomer.id,
+        job_id: selectedJob?.id || null,
         invoice_number: formData.invoice_number,
         status,
         issue_date: formData.issue_date,
@@ -429,6 +458,38 @@ export default function NewInvoicePage() {
                 </div>
               </div>
             </div>
+
+            {/* Job Selection */}
+            {customerJobs.length > 0 && (
+              <div className="card">
+                <h2 className="text-lg font-semibold text-corporate-dark mb-4">Link to Job</h2>
+                <p className="text-sm text-corporate-gray mb-3">
+                  Optionally link this invoice to a job for tracking
+                </p>
+                <select
+                  value={selectedJob?.id || ''}
+                  onChange={(e) => {
+                    const job = jobs.find(j => j.id === e.target.value);
+                    setSelectedJob(job || null);
+                  }}
+                  className="input-field"
+                >
+                  <option value="">No job selected</option>
+                  {customerJobs.map(job => (
+                    <option key={job.id} value={job.id}>
+                      {job.job_number} - {job.name}
+                    </option>
+                  ))}
+                </select>
+                {selectedJob && (
+                  <div className="mt-3 p-3 bg-blue-50 rounded-lg">
+                    <p className="text-sm text-blue-700">
+                      This invoice will be linked to job <strong>{selectedJob.job_number}</strong>
+                    </p>
+                  </div>
+                )}
+              </div>
+            )}
 
             <div className="card bg-corporate-light">
               <div className="space-y-3">

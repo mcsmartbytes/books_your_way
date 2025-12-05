@@ -241,6 +241,10 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   const completedPhases = phases.filter(p => p.status === 'completed').length;
   const progress = phases.length > 0 ? (completedPhases / phases.length) * 100 : 0;
 
+  // Calculate totals from linked transactions
+  const totalInvoiced = transactions.filter(t => t.type === 'invoice').reduce((sum, t) => sum + t.amount, 0);
+  const totalBilled = transactions.filter(t => t.type === 'bill').reduce((sum, t) => sum + t.amount, 0);
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -375,16 +379,16 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 <span className="font-medium text-corporate-dark">{formatCurrency(job.estimated_revenue)}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-corporate-gray">Actual Revenue</span>
-                <span className="font-medium text-green-600">{formatCurrency(job.actual_revenue)}</span>
+                <span className="text-corporate-gray">Invoiced Revenue</span>
+                <span className="font-medium text-green-600">{formatCurrency(totalInvoiced)}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-100">
                 <span className="text-corporate-gray">Estimated Cost</span>
                 <span className="font-medium text-corporate-dark">{formatCurrency(job.estimated_cost)}</span>
               </div>
               <div className="flex justify-between py-2 border-b border-gray-100">
-                <span className="text-corporate-gray">Actual Cost</span>
-                <span className="font-medium text-red-600">{formatCurrency(job.actual_cost)}</span>
+                <span className="text-corporate-gray">Billed Cost</span>
+                <span className="font-medium text-red-600">{formatCurrency(totalBilled)}</span>
               </div>
               <div className="flex justify-between py-2 pt-3">
                 <span className="font-semibold text-corporate-dark">Estimated Profit</span>
@@ -393,9 +397,9 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
                 </span>
               </div>
               <div className="flex justify-between py-2">
-                <span className="font-semibold text-corporate-dark">Actual Profit</span>
-                <span className={`font-bold ${actualProfit >= 0 ? 'text-green-600' : 'text-red-600'}`}>
-                  {formatCurrency(actualProfit)}
+                <span className="font-semibold text-corporate-dark">Actual Profit (Invoiced - Billed)</span>
+                <span className={`font-bold ${(totalInvoiced - totalBilled) >= 0 ? 'text-green-600' : 'text-red-600'}`}>
+                  {formatCurrency(totalInvoiced - totalBilled)}
                 </span>
               </div>
             </div>
@@ -587,7 +591,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
               Invoices and bills linked to this job
             </p>
             <div className="flex gap-2">
-              <Link href={`/dashboard/invoices/new?job=${job.id}`} className="btn-secondary text-sm">
+              <Link href={`/dashboard/invoices/new?customer=${job.customer_id}`} className="btn-secondary text-sm">
                 Create Invoice
               </Link>
               <Link href={`/dashboard/bills/new?job=${job.id}`} className="btn-secondary text-sm">
