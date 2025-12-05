@@ -6,7 +6,7 @@ import { supabase } from '@/utils/supabase';
 
 interface AccountBalance {
   id: string;
-  account_number: string;
+  code: string;
   name: string;
   type: string;
   balance: number;
@@ -44,11 +44,11 @@ export default function BalanceSheetPage() {
 
     // Load chart of accounts
     const { data: accountsData } = await supabase
-      .from('chart_of_accounts')
+      .from('accounts')
       .select('*')
       .eq('user_id', session.user.id)
       .eq('is_active', true)
-      .order('account_number');
+      .order('code');
 
     if (!accountsData) {
       setLoading(false);
@@ -106,7 +106,7 @@ export default function BalanceSheetPage() {
     accountsData.forEach(account => {
       const balance: AccountBalance = {
         id: account.id,
-        account_number: account.account_number,
+        code: account.code,
         name: account.name,
         type: account.type,
         balance: 0, // In a real app, would calculate from journal entries
@@ -138,7 +138,7 @@ export default function BalanceSheetPage() {
     if (!assets.some(a => a.name.toLowerCase().includes('accounts receivable')) && accountsReceivable > 0) {
       assets.unshift({
         id: 'ar',
-        account_number: '1100',
+        code: '1100',
         name: 'Accounts Receivable',
         type: 'Asset',
         balance: accountsReceivable,
@@ -149,7 +149,7 @@ export default function BalanceSheetPage() {
     if (!liabilities.some(l => l.name.toLowerCase().includes('accounts payable')) && accountsPayable > 0) {
       liabilities.unshift({
         id: 'ap',
-        account_number: '2100',
+        code: '2100',
         name: 'Accounts Payable',
         type: 'Liability',
         balance: accountsPayable,
@@ -160,7 +160,7 @@ export default function BalanceSheetPage() {
     if (!equity.some(e => e.name.toLowerCase().includes('retained earnings'))) {
       equity.push({
         id: 're',
-        account_number: '3200',
+        code: '3200',
         name: 'Retained Earnings',
         type: 'Equity',
         balance: retainedEarnings,
@@ -286,7 +286,7 @@ export default function BalanceSheetPage() {
                   data.assets.map((account) => (
                     <div key={account.id} className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-corporate-dark">
-                        {account.account_number} - {account.name}
+                        {account.code} - {account.name}
                       </span>
                       <span className="font-medium text-corporate-dark">{formatCurrency(account.balance)}</span>
                     </div>
@@ -311,7 +311,7 @@ export default function BalanceSheetPage() {
                   data.liabilities.map((account) => (
                     <div key={account.id} className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-corporate-dark">
-                        {account.account_number} - {account.name}
+                        {account.code} - {account.name}
                       </span>
                       <span className="font-medium text-corporate-dark">{formatCurrency(account.balance)}</span>
                     </div>
@@ -336,7 +336,7 @@ export default function BalanceSheetPage() {
                   data.equity.map((account) => (
                     <div key={account.id} className="flex justify-between py-2 border-b border-gray-100">
                       <span className="text-corporate-dark">
-                        {account.account_number} - {account.name}
+                        {account.code} - {account.name}
                       </span>
                       <span className="font-medium text-corporate-dark">{formatCurrency(account.balance)}</span>
                     </div>

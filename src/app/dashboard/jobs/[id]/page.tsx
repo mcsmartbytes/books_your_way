@@ -236,7 +236,6 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
   }
 
   const estimatedProfit = job.estimated_revenue - job.estimated_cost;
-  const actualProfit = job.actual_revenue - job.actual_cost;
   const profitMargin = job.estimated_revenue > 0 ? (estimatedProfit / job.estimated_revenue) * 100 : 0;
   const completedPhases = phases.filter(p => p.status === 'completed').length;
   const progress = phases.length > 0 ? (completedPhases / phases.length) * 100 : 0;

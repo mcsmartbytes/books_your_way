@@ -22,8 +22,8 @@ interface JournalLine {
   description: string;
   debit: number;
   credit: number;
-  chart_of_accounts?: {
-    account_number: string;
+  accounts?: {
+    code: string;
     name: string;
     type: string;
   };
@@ -62,7 +62,7 @@ export default function JournalEntryDetailPage({ params }: { params: { id: strin
       .from('journal_entry_lines')
       .select(`
         *,
-        chart_of_accounts (account_number, name, type)
+        accounts (code, name, type)
       `)
       .eq('journal_entry_id', params.id)
       .order('sort_order');
@@ -214,9 +214,9 @@ export default function JournalEntryDetailPage({ params }: { params: { id: strin
                 <tr key={line.id}>
                   <td>
                     <p className="font-medium text-corporate-dark">
-                      {line.chart_of_accounts?.account_number} - {line.chart_of_accounts?.name}
+                      {line.accounts?.code} - {line.accounts?.name}
                     </p>
-                    <p className="text-xs text-corporate-gray">{line.chart_of_accounts?.type}</p>
+                    <p className="text-xs text-corporate-gray">{line.accounts?.type}</p>
                   </td>
                   <td className="text-corporate-slate">{line.description || '—'}</td>
                   <td className="text-right font-medium text-corporate-dark">

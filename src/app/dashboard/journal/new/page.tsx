@@ -7,7 +7,7 @@ import { supabase } from '@/utils/supabase';
 
 interface Account {
   id: string;
-  account_number: string;
+  code: string;
   name: string;
   type: string;
 }
@@ -48,11 +48,11 @@ export default function NewJournalEntryPage() {
     if (!session) return;
 
     const { data: accountsData } = await supabase
-      .from('chart_of_accounts')
-      .select('id, account_number, name, type')
+      .from('accounts')
+      .select('id, code, name, type')
       .eq('user_id', session.user.id)
       .eq('is_active', true)
-      .order('account_number');
+      .order('code');
 
     setAccounts(accountsData || []);
   };
@@ -60,7 +60,7 @@ export default function NewJournalEntryPage() {
   const selectAccount = (lineId: string, account: Account) => {
     setLines(lines.map(line =>
       line.id === lineId
-        ? { ...line, account_id: account.id, account_name: `${account.account_number} - ${account.name}` }
+        ? { ...line, account_id: account.id, account_name: `${account.code} - ${account.name}` }
         : line
     ));
     setActiveDropdown(null);
@@ -71,7 +71,7 @@ export default function NewJournalEntryPage() {
     const search = accountSearches[lineId] || '';
     return accounts.filter(a =>
       a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.account_number.toLowerCase().includes(search.toLowerCase())
+      a.code.toLowerCase().includes(search.toLowerCase())
     );
   };
 
@@ -262,7 +262,7 @@ export default function NewJournalEntryPage() {
                           onClick={() => selectAccount(line.id, account)}
                           className="w-full px-4 py-2 text-left hover:bg-gray-50"
                         >
-                          <span className="font-medium text-corporate-dark">{account.account_number}</span>
+                          <span className="font-medium text-corporate-dark">{account.code}</span>
                           <span className="text-corporate-gray ml-2">{account.name}</span>
                           <span className="text-xs text-corporate-gray ml-2">({account.type})</span>
                         </button>

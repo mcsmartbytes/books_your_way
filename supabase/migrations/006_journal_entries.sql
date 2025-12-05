@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS journal_entries (
 CREATE TABLE IF NOT EXISTS journal_entry_lines (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   journal_entry_id UUID NOT NULL REFERENCES journal_entries(id) ON DELETE CASCADE,
-  account_id UUID NOT NULL REFERENCES chart_of_accounts(id) ON DELETE RESTRICT,
+  account_id UUID NOT NULL REFERENCES accounts(id) ON DELETE RESTRICT,
   description TEXT,
   debit DECIMAL(12,2) DEFAULT 0,
   credit DECIMAL(12,2) DEFAULT 0,
