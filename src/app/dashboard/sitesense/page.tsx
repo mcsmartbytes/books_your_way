@@ -158,7 +158,7 @@ export default function SiteSensePage() {
           </div>
           <div className="flex-1">
             <iframe
-              src="https://sitesense-lilac.vercel.app/dashboard"
+              src="https://sitesense-lilac.vercel.app/jobs?embedded=true"
               className="w-full h-full border-0"
               title="SiteSense"
               allow="geolocation; camera; microphone"
@@ -171,7 +171,7 @@ export default function SiteSensePage() {
       {!isFullscreen && (
         <div className="card overflow-hidden p-0">
           <iframe
-            src="https://sitesense-lilac.vercel.app/dashboard"
+            src="https://sitesense-lilac.vercel.app/jobs?embedded=true"
             className="w-full h-[700px] border-0"
             title="SiteSense"
             allow="geolocation; camera; microphone"

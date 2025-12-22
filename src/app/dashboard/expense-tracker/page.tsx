@@ -135,7 +135,7 @@ export default function ExpenseTrackerPage() {
           </div>
           <div className="flex-1">
             <iframe
-              src="https://expenses-made-easy-opal.vercel.app/expense-dashboard"
+              src="https://expenses-made-easy-opal.vercel.app/expenses?embedded=true"
               className="w-full h-full border-0"
               title="Expenses Made Easy"
               allow="geolocation; camera; microphone"
@@ -148,7 +148,7 @@ export default function ExpenseTrackerPage() {
       {!isFullscreen && (
         <div className="card overflow-hidden p-0">
           <iframe
-            src="https://expenses-made-easy-opal.vercel.app/expense-dashboard"
+            src="https://expenses-made-easy-opal.vercel.app/expenses?embedded=true"
             className="w-full h-[700px] border-0"
             title="Expenses Made Easy"
             allow="geolocation; camera; microphone"
