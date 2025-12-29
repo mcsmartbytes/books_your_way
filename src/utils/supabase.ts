@@ -5,5 +5,9 @@ const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || '';
 
 // Create a dummy client if env vars are missing (for build time)
 export const supabase = supabaseUrl && supabaseAnonKey
-  ? createClient(supabaseUrl, supabaseAnonKey)
+  ? createClient(supabaseUrl, supabaseAnonKey, {
+      db: {
+        schema: 'books'  // Use books schema in unified database
+      }
+    })
   : createClient('https://placeholder.supabase.co', 'placeholder-key');
