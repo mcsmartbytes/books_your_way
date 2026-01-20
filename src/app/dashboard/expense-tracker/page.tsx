@@ -53,7 +53,7 @@ export default function ExpenseTrackerPage() {
                 <p className="font-semibold text-lg">Expenses Made Easy - Integrated</p>
                 <p className="text-sm text-green-100 mt-1">
                   Business expense tracking with receipt OCR, mileage logging, tax deduction calculations, and recurring expense management.
-                  Expenses sync to Books Made Easy as bills for complete financial visibility.
+                  Expenses sync to Books Your Way as bills for complete financial visibility.
                 </p>
               </div>
             </div>

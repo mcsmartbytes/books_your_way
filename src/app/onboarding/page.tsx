@@ -168,7 +168,7 @@ export default function OnboardingPage() {
         {/* Step 1: Company Name */}
         {step === 1 && (
           <div className="card text-center">
-            <h1 className="text-2xl font-bold text-corporate-dark mb-2">Welcome to Books Made Easy</h1>
+            <h1 className="text-2xl font-bold text-corporate-dark mb-2">Welcome to Books Your Way</h1>
             <p className="text-corporate-gray mb-8">Let&apos;s set up your account in just a few steps</p>
 
             <div className="max-w-md mx-auto">

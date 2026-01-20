@@ -3,7 +3,7 @@ import "./globals.css";
 import Providers from "@/components/Providers";
 
 export const metadata: Metadata = {
-  title: "Books Made Easy - Simple Accounting Software",
+  title: "Books Your Way - Simple Accounting Software",
   description: "Professional accounting software for small businesses. Manage invoices, bills, customers, and vendors with ease.",
   keywords: "accounting software, invoicing, small business, bookkeeping, AR, AP",
   manifest: "/manifest.json",
@@ -38,7 +38,7 @@ export default function RootLayout({
       <head>
         {/* PWA Meta Tags */}
         <link rel="manifest" href="/manifest.json" />
-        <meta name="application-name" content="Books Made Easy" />
+        <meta name="application-name" content="Books Your Way" />
 
         {/* iOS/Apple Meta Tags */}
         <meta name="apple-mobile-web-app-capable" content="yes" />

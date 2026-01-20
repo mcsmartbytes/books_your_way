@@ -126,7 +126,7 @@ class NativeMileageTracker {
       this.watcherId = await BackgroundGeolocation.addWatcher(
         {
           backgroundMessage: 'Tracking mileage in background',
-          backgroundTitle: 'Books Made Easy',
+          backgroundTitle: 'Books Your Way',
           requestPermissions: true,
           stale: false,
           distanceFilter: 10, // meters

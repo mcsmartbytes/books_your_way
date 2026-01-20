@@ -83,7 +83,7 @@ export default function SignupPage() {
           <div className="w-10 h-10 bg-primary-600 rounded-lg flex items-center justify-center">
             <span className="text-white font-bold text-lg">B</span>
           </div>
-          <span className="text-2xl font-bold text-corporate-dark">Books Made Easy</span>
+          <span className="text-2xl font-bold text-corporate-dark">Books Your Way</span>
         </Link>
         <h2 className="text-center text-2xl font-bold text-corporate-dark">
           Create your account

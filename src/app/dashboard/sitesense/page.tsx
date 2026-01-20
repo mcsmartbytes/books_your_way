@@ -53,7 +53,7 @@ export default function SiteSensePage() {
                 <p className="font-semibold text-lg">SiteSense - Job Costing & Estimates</p>
                 <p className="text-sm text-blue-100 mt-1">
                   Create professional estimates, track job costs, manage crews, and monitor project profitability.
-                  Approved estimates automatically sync to Books Made Easy as invoices.
+                  Approved estimates automatically sync to Books Your Way as invoices.
                 </p>
               </div>
             </div>
@@ -103,7 +103,7 @@ export default function SiteSensePage() {
                 </div>
                 <h3 className="font-semibold text-corporate-dark">Client Management</h3>
               </div>
-              <p className="text-sm text-corporate-gray">Manage clients and sync them to Books Made Easy as customers.</p>
+              <p className="text-sm text-corporate-gray">Manage clients and sync them to Books Your Way as customers.</p>
             </div>
           </div>
 
