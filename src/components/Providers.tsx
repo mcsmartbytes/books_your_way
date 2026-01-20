@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import { AuthProvider } from '@/contexts/AuthContext';
+import { UserModeProvider } from '@/contexts/UserModeContext';
 
 interface ProvidersProps {
   children: ReactNode;
@@ -10,7 +11,9 @@ interface ProvidersProps {
 export default function Providers({ children }: ProvidersProps) {
   return (
     <AuthProvider>
-      {children}
+      <UserModeProvider>
+        {children}
+      </UserModeProvider>
     </AuthProvider>
   );
 }
