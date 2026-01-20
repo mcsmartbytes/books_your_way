@@ -41,6 +41,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const loadDashboard = async () => {
       const { data: { session } } = await supabase.auth.getSession();
+      if (!session?.user) {
+        router.push('/login');
+        return;
+      }
       if (session?.user) {
         // Check if onboarding is complete
         const { data: settings } = await supabase
