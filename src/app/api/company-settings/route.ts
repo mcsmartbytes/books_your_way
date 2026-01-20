@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
       .eq('user_id', userId)
       .single();
 
-    if (error && error.code !== 'PGRST116') throw error;
+    if (error && (error as any).code !== 'PGRST116') throw error;
     return NextResponse.json({ success: true, data: data || null });
   } catch (error) {
     console.error('Error fetching company settings:', error);

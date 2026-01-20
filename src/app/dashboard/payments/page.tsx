@@ -44,7 +44,7 @@ export default function PaymentsPage() {
       .order('payment_date', { ascending: false });
 
     if (!error && paymentsData) {
-      const mapped = paymentsData.map(p => ({
+      const mapped = paymentsData.map((p: any) => ({
         ...p,
         customer_name: p.invoices?.customers?.name || null,
         vendor_name: p.bills?.vendors?.name || null,

@@ -1,20 +1,7 @@
-import { createClient, SupabaseClient } from '@supabase/supabase-js';
+// Re-export Neon admin client with Supabase-compatible interface
+// This allows existing code to continue working without changes
+import { neonAdmin, getNeonAdmin, getSql } from './neonAdmin';
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL || '';
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY || '';
-
-if (!supabaseUrl || !supabaseServiceKey) {
-  console.warn('Supabase admin client is missing env vars. Check NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY.');
-}
-
-export const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    autoRefreshToken: false,
-    persistSession: false,
-  },
-});
-
-// Compatibility function for migrated expenses code
-export function getSupabaseAdmin(): SupabaseClient {
-  return supabaseAdmin;
-}
+export const supabaseAdmin = neonAdmin;
+export const getSupabaseAdmin = getNeonAdmin;
+export { getSql };

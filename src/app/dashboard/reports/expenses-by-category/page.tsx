@@ -89,7 +89,7 @@ export default function ExpensesByCategoryPage() {
 
     const categoryMap = new Map<string, CategoryExpense>();
 
-    billsData.forEach(bill => {
+    billsData.forEach((bill: any) => {
       const category = bill.category || 'Uncategorized';
 
       let categoryExpense = categoryMap.get(category);

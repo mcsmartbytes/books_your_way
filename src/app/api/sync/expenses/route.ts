@@ -247,16 +247,16 @@ export async function GET(request: NextRequest) {
 
   try {
     // Count synced items
-    const { count: expenseCount } = await supabaseAdmin
+    const { data: expenseData } = await supabaseAdmin
       .from('bills')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId)
       .eq('external_source', 'expenses_made_easy')
       .like('external_id', 'expenses:%');
 
-    const { count: mileageCount } = await supabaseAdmin
+    const { data: mileageData } = await supabaseAdmin
       .from('bills')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId)
       .eq('external_source', 'expenses_made_easy')
       .like('external_id', 'mileage:%');
@@ -276,9 +276,9 @@ export async function GET(request: NextRequest) {
       status: {
         connected: true,
         source: 'expenses_made_easy',
-        syncedExpenses: expenseCount || 0,
-        syncedMileage: mileageCount || 0,
-        lastSyncedAt: lastSynced?.updated_at || null,
+        syncedExpenses: expenseData?.length || 0,
+        syncedMileage: mileageData?.length || 0,
+        lastSyncedAt: (lastSynced as any)?.updated_at || null,
       },
     });
   } catch (error) {

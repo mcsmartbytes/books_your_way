@@ -100,7 +100,7 @@ export default function ExpensesByVendorPage() {
 
     const vendorMap = new Map<string, VendorExpenses>();
 
-    billsData.forEach(bill => {
+    billsData.forEach((bill: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const vendorData = bill.vendors as any;
       const vendor = vendorData && !Array.isArray(vendorData) ? vendorData as { id: string; name: string; email: string } : null;

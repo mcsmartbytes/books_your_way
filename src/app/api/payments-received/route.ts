@@ -73,8 +73,9 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (invoice) {
-        const newAmountPaid = (invoice.amount_paid || 0) + amount;
-        const newStatus = newAmountPaid >= invoice.total ? 'paid' : 'sent';
+        const invoiceData = invoice as any;
+        const newAmountPaid = (invoiceData.amount_paid || 0) + amount;
+        const newStatus = newAmountPaid >= invoiceData.total ? 'paid' : 'sent';
 
         await supabaseAdmin
           .from('invoices')
@@ -92,9 +93,10 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (customer) {
+        const customerData = customer as any;
         await supabaseAdmin
           .from('customers')
-          .update({ balance: (customer.balance || 0) - amount })
+          .update({ balance: (customerData.balance || 0) - amount })
           .eq('id', customer_id);
       }
     }
@@ -128,6 +130,7 @@ export async function DELETE(request: NextRequest) {
     if (!payment) {
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
     }
+    const paymentData = payment as any;
 
     // Delete payment
     const { error } = await supabaseAdmin
@@ -139,21 +142,22 @@ export async function DELETE(request: NextRequest) {
     if (error) throw error;
 
     // Reverse invoice amount_paid if linked
-    if (payment.invoice_id) {
+    if (paymentData.invoice_id) {
       const { data: invoice } = await supabaseAdmin
         .from('invoices')
         .select('amount_paid, total')
-        .eq('id', payment.invoice_id)
+        .eq('id', paymentData.invoice_id)
         .single();
 
       if (invoice) {
-        const newAmountPaid = Math.max(0, (invoice.amount_paid || 0) - payment.amount);
-        const newStatus = newAmountPaid >= invoice.total ? 'paid' : 'sent';
+        const invoiceData = invoice as any;
+        const newAmountPaid = Math.max(0, (invoiceData.amount_paid || 0) - paymentData.amount);
+        const newStatus = newAmountPaid >= invoiceData.total ? 'paid' : 'sent';
 
         await supabaseAdmin
           .from('invoices')
           .update({ amount_paid: newAmountPaid, status: newStatus })
-          .eq('id', payment.invoice_id);
+          .eq('id', paymentData.invoice_id);
       }
     }
 

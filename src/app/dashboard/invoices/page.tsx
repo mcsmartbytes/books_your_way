@@ -53,7 +53,7 @@ export default function InvoicesPage() {
     } else {
       // Update status to overdue if past due date and not paid
       const today = new Date().toISOString().split('T')[0];
-      const updatedInvoices = (data || []).map(inv => {
+      const updatedInvoices = (data || []).map((inv: any) => {
         if ((inv.status === 'sent') && inv.due_date < today) {
           return { ...inv, status: 'overdue' as const };
         }

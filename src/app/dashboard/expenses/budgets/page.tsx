@@ -85,9 +85,10 @@ export default function BudgetsPage() {
 
       if (error) throw error;
 
+      const userId = user.id as string;
       const budgetsWithSpending = await Promise.all(
-        (budgetsData || []).map(async (budget) => {
-          const spent = await calculateSpending(user.id, budget);
+        (budgetsData || []).map(async (budget: any) => {
+          const spent = await calculateSpending(userId, budget);
           return { ...budget, spent };
         })
       );
@@ -136,7 +137,7 @@ export default function BudgetsPage() {
     }
 
     const { data } = await query;
-    return data?.reduce((sum, e) => sum + Number(e.amount), 0) || 0;
+    return data?.reduce((sum: number, e: any) => sum + Number(e.amount), 0) || 0;
   }
 
   async function createBudget(e: React.FormEvent) {

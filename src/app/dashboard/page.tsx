@@ -67,11 +67,11 @@ export default function DashboardPage() {
         const invoices = invoicesResult.data || [];
         const bills = billsResult.data || [];
 
-        const totalRevenue = invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + (i.total || 0), 0);
-        const outstandingReceivables = invoices.filter(i => i.status === 'sent' || i.status === 'overdue').reduce((sum, i) => sum + ((i.total || 0) - (i.amount_paid || 0)), 0);
-        const outstandingPayables = bills.filter(b => b.status === 'unpaid' || b.status === 'overdue').reduce((sum, b) => sum + ((b.total || 0) - (b.amount_paid || 0)), 0);
-        const invoicesDue = invoices.filter(i => i.status === 'sent' || i.status === 'overdue').length;
-        const billsDue = bills.filter(b => b.status === 'unpaid' || b.status === 'overdue').length;
+        const totalRevenue = invoices.filter((i: any) => i.status === 'paid').reduce((sum: number, i: any) => sum + (i.total || 0), 0);
+        const outstandingReceivables = invoices.filter((i: any) => i.status === 'sent' || i.status === 'overdue').reduce((sum: number, i: any) => sum + ((i.total || 0) - (i.amount_paid || 0)), 0);
+        const outstandingPayables = bills.filter((b: any) => b.status === 'unpaid' || b.status === 'overdue').reduce((sum: number, b: any) => sum + ((b.total || 0) - (b.amount_paid || 0)), 0);
+        const invoicesDue = invoices.filter((i: any) => i.status === 'sent' || i.status === 'overdue').length;
+        const billsDue = bills.filter((b: any) => b.status === 'unpaid' || b.status === 'overdue').length;
 
         setStats({
           totalRevenue,

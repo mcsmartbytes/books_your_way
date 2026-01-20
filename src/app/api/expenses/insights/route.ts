@@ -34,13 +34,13 @@ export async function GET(request: NextRequest) {
     const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0);
 
     // Fetch expenses with categories
-    const { data: currentExpenses } = await supabaseAdmin
+    const { data: _currentExpenses } = await supabaseAdmin
       .from('expenses')
       .select('amount, category_id, is_business, date, categories(name, deduction_percentage)')
       .eq('user_id', userId)
       .gte('date', currentMonthStart.toISOString().split('T')[0]);
 
-    const { data: previousExpenses } = await supabaseAdmin
+    const { data: _previousExpenses } = await supabaseAdmin
       .from('expenses')
       .select('amount, category_id, is_business, date, categories(name, deduction_percentage)')
       .eq('user_id', userId)
@@ -48,13 +48,13 @@ export async function GET(request: NextRequest) {
       .lte('date', previousMonthEnd.toISOString().split('T')[0]);
 
     // Fetch budgets
-    const { data: budgets } = await supabaseAdmin
+    const { data: _budgets } = await supabaseAdmin
       .from('budgets')
       .select('*')
       .eq('user_id', userId);
 
     // Fetch mileage (current month)
-    const { data: mileageData } = await supabaseAdmin
+    const { data: _mileageData } = await supabaseAdmin
       .from('mileage')
       .select('distance, is_business, date')
       .eq('user_id', userId)
@@ -62,31 +62,38 @@ export async function GET(request: NextRequest) {
 
     // Fetch year-to-date mileage
     const yearStart = new Date(now.getFullYear(), 0, 1).toISOString().split('T')[0];
-    const { data: ytdMileageData } = await supabaseAdmin
+    const { data: _ytdMileageData } = await supabaseAdmin
       .from('mileage')
       .select('distance, is_business, amount')
       .eq('user_id', userId)
       .eq('is_business', true)
       .gte('date', yearStart);
 
+    // Cast arrays for type safety
+    const currentExpensesList = (_currentExpenses || []) as any[];
+    const previousExpensesList = (_previousExpenses || []) as any[];
+    const budgetsList = (_budgets || []) as any[];
+    const mileageList = (_mileageData || []) as any[];
+    const ytdMileageList = (_ytdMileageData || []) as any[];
+
     // Calculate totals
-    const currentTotal = (currentExpenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
-    const previousTotal = (previousExpenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
-    const currentBusiness = (currentExpenses || []).filter(e => e.is_business).reduce((sum, e) => sum + Number(e.amount), 0);
-    const _previousBusiness = (previousExpenses || []).filter(e => e.is_business).reduce((sum, e) => sum + Number(e.amount), 0);
+    const currentTotal = currentExpensesList.reduce((sum, e) => sum + Number(e.amount), 0);
+    const previousTotal = previousExpensesList.reduce((sum, e) => sum + Number(e.amount), 0);
+    const currentBusiness = currentExpensesList.filter(e => e.is_business).reduce((sum, e) => sum + Number(e.amount), 0);
+    const _previousBusiness = previousExpensesList.filter(e => e.is_business).reduce((sum, e) => sum + Number(e.amount), 0);
 
     // Calculate by category
     const currentByCategory = new Map<string, { amount: number; name: string }>();
     const previousByCategory = new Map<string, { amount: number; name: string }>();
 
-    (currentExpenses || []).forEach(e => {
+    currentExpensesList.forEach(e => {
       const catName = (e.categories as any)?.name || 'Uncategorized';
       const existing = currentByCategory.get(catName) || { amount: 0, name: catName };
       existing.amount += Number(e.amount);
       currentByCategory.set(catName, existing);
     });
 
-    (previousExpenses || []).forEach(e => {
+    previousExpensesList.forEach(e => {
       const catName = (e.categories as any)?.name || 'Uncategorized';
       const existing = previousByCategory.get(catName) || { amount: 0, name: catName };
       existing.amount += Number(e.amount);
@@ -150,8 +157,8 @@ export async function GET(request: NextRequest) {
     const dayOfMonth = now.getDate();
     const monthProgress = dayOfMonth / daysInMonth;
 
-    (budgets || []).forEach(budget => {
-      const categoryExpenses = (currentExpenses || [])
+    budgetsList.forEach(budget => {
+      const categoryExpenses = currentExpensesList
         .filter(e => {
           const catName = (e.categories as any)?.name;
           return catName === budget.category;
@@ -191,13 +198,13 @@ export async function GET(request: NextRequest) {
     });
 
     // 4. Tax deduction insights
-    const businessExpenses = (currentExpenses || []).filter(e => e.is_business);
+    const businessExpenses = currentExpensesList.filter(e => e.is_business);
     const deductibleAmount = businessExpenses.reduce((sum, e) => {
       const deductionPct = (e.categories as any)?.deduction_percentage || 0;
       return sum + (Number(e.amount) * deductionPct / 100);
     }, 0);
 
-    const businessMileage = (mileageData || [])
+    const businessMileage = mileageList
       .filter(m => m.is_business)
       .reduce((sum, m) => sum + Number(m.distance), 0);
     const mileageDeduction = businessMileage * 0.67; // 2024 IRS rate
@@ -220,7 +227,7 @@ export async function GET(request: NextRequest) {
     }
 
     // 5. Uncategorized expenses
-    const uncategorizedCount = (currentExpenses || []).filter(e => !e.category_id).length;
+    const uncategorizedCount = currentExpensesList.filter(e => !e.category_id).length;
     if (uncategorizedCount > 3) {
       insights.push({
         id: 'uncategorized_expenses',
@@ -270,7 +277,7 @@ export async function GET(request: NextRequest) {
 
     // 8. Mileage deduction highlight - show when user has tracked meaningful mileage
     if (mileageDeduction >= 10) {
-      const tripCount = (mileageData || []).filter(m => m.is_business).length;
+      const tripCount = mileageList.filter(m => m.is_business).length;
       insights.push({
         id: 'mileage_deduction_highlight',
         type: 'tax_tip',
@@ -286,8 +293,8 @@ export async function GET(request: NextRequest) {
     }
 
     // 9. Year-to-date mileage achievement
-    const ytdMiles = (ytdMileageData || []).reduce((sum, m) => sum + Number(m.distance), 0);
-    const ytdMileageDeduction = (ytdMileageData || []).reduce((sum, m) => sum + Number(m.amount), 0);
+    const ytdMiles = ytdMileageList.reduce((sum, m) => sum + Number(m.distance), 0);
+    const ytdMileageDeduction = ytdMileageList.reduce((sum, m) => sum + Number(m.amount), 0);
     if (ytdMileageDeduction >= 500) {
       insights.push({
         id: 'ytd_mileage_achievement',

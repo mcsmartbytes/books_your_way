@@ -100,8 +100,8 @@ export default function CashFlowPage() {
       .gte('payment_date', startDate)
       .lte('payment_date', endDate);
 
-    const totalReceived = paymentsReceived?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
-    const totalPaid = paymentsMade?.reduce((sum, p) => sum + (p.amount || 0), 0) || 0;
+    const totalReceived = paymentsReceived?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
+    const totalPaid = paymentsMade?.reduce((sum: number, p: any) => sum + (p.amount || 0), 0) || 0;
 
     const operatingActivities = [
       { description: 'Cash received from customers', amount: totalReceived },

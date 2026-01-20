@@ -87,11 +87,12 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (invoiceError) throw invoiceError;
+    if (!invoice) throw new Error('Failed to create invoice');
 
     // Create invoice items
     if (items && items.length > 0) {
       const invoiceItems = items.map((item: any, index: number) => ({
-        invoice_id: invoice.id,
+        invoice_id: (invoice as any).id,
         description: item.description,
         quantity: item.quantity || 1,
         rate: item.rate || 0,
@@ -111,7 +112,7 @@ export async function POST(request: NextRequest) {
     const { data: fullInvoice } = await supabaseAdmin
       .from('invoices')
       .select('*, customers(id, name, email, company), invoice_items(*)')
-      .eq('id', invoice.id)
+      .eq('id', (invoice as any).id)
       .single();
 
     return NextResponse.json({ success: true, data: fullInvoice }, { status: 201 });

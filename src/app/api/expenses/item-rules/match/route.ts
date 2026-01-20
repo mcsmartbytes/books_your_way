@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    if (!rules || rules.length === 0) {
+    const rulesList = (rules || []) as any[];
+    if (rulesList.length === 0) {
       return NextResponse.json({
         success: true,
         match: null,
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find first matching rule
-    for (const rule of rules) {
+    for (const rule of rulesList) {
       // If rule has vendor_pattern, check vendor match first
       if (rule.vendor_pattern && vendor) {
         const vendorMatches = vendor.toLowerCase().includes(rule.vendor_pattern);
@@ -126,7 +127,8 @@ export async function PUT(request: NextRequest) {
 
     if (error) throw error;
 
-    if (!rules || rules.length === 0) {
+    const rulesList2 = (rules || []) as any[];
+    if (rulesList2.length === 0) {
       return NextResponse.json({
         success: true,
         matches: {},
@@ -138,7 +140,7 @@ export async function PUT(request: NextRequest) {
     const matches: Record<string, any> = {};
 
     for (const itemName of items) {
-      for (const rule of rules) {
+      for (const rule of rulesList2) {
         // Check vendor pattern if exists
         if (rule.vendor_pattern && vendor) {
           const vendorMatches = vendor.toLowerCase().includes(rule.vendor_pattern);

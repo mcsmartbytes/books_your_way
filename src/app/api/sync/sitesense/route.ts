@@ -174,12 +174,12 @@ async function syncEstimate(userId: string, estimate: any) {
   }
 
   // Generate invoice number
-  const { count } = await supabaseAdmin
+  const { data: invoiceCountData } = await supabaseAdmin
     .from('invoices')
-    .select('*', { count: 'exact', head: true })
+    .select('id')
     .eq('user_id', userId);
 
-  const invoiceNumber = `INV-${String((count || 0) + 1001).padStart(4, '0')}`;
+  const invoiceNumber = `INV-${String((invoiceCountData?.length || 0) + 1001).padStart(4, '0')}`;
 
   // Calculate totals from estimate items
   const subtotal = (estimate.items || []).reduce(
@@ -213,11 +213,13 @@ async function syncEstimate(userId: string, estimate: any) {
     .single();
 
   if (invoiceError) throw invoiceError;
+  if (!invoice) throw new Error('Failed to create invoice');
+  const invoiceData = invoice as any;
 
   // Create invoice items
   if (estimate.items && estimate.items.length > 0) {
     const invoiceItems = estimate.items.map((item: any, index: number) => ({
-      invoice_id: invoice.id,
+      invoice_id: invoiceData.id,
       description: item.description || item.name,
       quantity: item.quantity || 1,
       rate: item.rate || item.unit_price || 0,
@@ -228,7 +230,7 @@ async function syncEstimate(userId: string, estimate: any) {
     await supabaseAdmin.from('invoice_items').insert(invoiceItems);
   }
 
-  return NextResponse.json({ success: true, action: 'created', data: invoice });
+  return NextResponse.json({ success: true, action: 'created', data: invoiceData });
 }
 
 // Sync time entries as billable items (adds to pending invoice items)
@@ -427,21 +429,21 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const { count: customerCount } = await supabaseAdmin
+    const { data: customerData } = await supabaseAdmin
       .from('customers')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId)
       .eq('external_source', 'sitesense');
 
-    const { count: invoiceCount } = await supabaseAdmin
+    const { data: invoiceData } = await supabaseAdmin
       .from('invoices')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId)
       .eq('external_source', 'sitesense');
 
-    const { count: billCount } = await supabaseAdmin
+    const { data: billData } = await supabaseAdmin
       .from('bills')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId)
       .eq('external_source', 'sitesense');
 
@@ -459,10 +461,10 @@ export async function GET(request: NextRequest) {
       status: {
         connected: true,
         source: 'sitesense',
-        syncedCustomers: customerCount || 0,
-        syncedInvoices: invoiceCount || 0,
-        syncedBills: billCount || 0,
-        lastSyncedAt: lastSynced?.updated_at || null,
+        syncedCustomers: customerData?.length || 0,
+        syncedInvoices: invoiceData?.length || 0,
+        syncedBills: billData?.length || 0,
+        lastSyncedAt: (lastSynced as any)?.updated_at || null,
       },
     });
   } catch (error) {

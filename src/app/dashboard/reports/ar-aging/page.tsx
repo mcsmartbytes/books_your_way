@@ -68,7 +68,7 @@ export default function ARAgingPage() {
 
     const summary: AgingBucket = { current: 0, days30: 0, days60: 0, days90: 0, over90: 0, total: 0 };
 
-    invoicesData.forEach(invoice => {
+    invoicesData.forEach((invoice: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const customerData = invoice.customers as any;
       const customer = customerData && !Array.isArray(customerData) ? customerData as { id: string; name: string; email: string } : null;

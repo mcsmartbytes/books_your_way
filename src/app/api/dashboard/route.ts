@@ -28,10 +28,10 @@ export async function GET(request: NextRequest) {
       supabaseAdmin.from('payments_made').select('amount, payment_date').eq('user_id', userId),
     ]);
 
-    const invoices = invoicesResult.data || [];
-    const bills = billsResult.data || [];
-    const paymentsReceived = paymentsReceivedResult.data || [];
-    const paymentsMade = paymentsMadeResult.data || [];
+    const invoices = (invoicesResult.data || []) as any[];
+    const bills = (billsResult.data || []) as any[];
+    const paymentsReceived = (paymentsReceivedResult.data || []) as any[];
+    const paymentsMade = (paymentsMadeResult.data || []) as any[];
 
     // Calculate stats
     const totalRevenue = invoices
@@ -100,8 +100,8 @@ export async function GET(request: NextRequest) {
           totalRevenue,
           outstandingReceivables,
           outstandingPayables,
-          customersCount: customersResult.count || 0,
-          vendorsCount: vendorsResult.count || 0,
+          customersCount: customersResult.data?.length || 0,
+          vendorsCount: vendorsResult.data?.length || 0,
           invoicesDue,
           billsDue,
           thisMonthRevenue,

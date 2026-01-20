@@ -64,6 +64,7 @@ export async function POST(request: NextRequest) {
       .select();
 
     if (error) throw error;
+    if (!data) throw new Error('No data returned from insert');
 
     return NextResponse.json({
       success: true,

@@ -36,7 +36,8 @@ export async function GET(request: NextRequest) {
       gamificationState = getDefaultGamificationState();
     } else {
       // Extract gamification state from preferences
-      const preferences = profile.preferences || {};
+      const profileData = profile as any;
+      const preferences = profileData.preferences || {};
       gamificationState = preferences.gamification || getDefaultGamificationState();
     }
 
@@ -87,8 +88,9 @@ export async function POST(request: NextRequest) {
     let currentState: GamificationState;
     let existingPreferences: Record<string, unknown> = {};
 
-    if (profile?.preferences) {
-      existingPreferences = profile.preferences;
+    const profileData = profile as any;
+    if (profileData?.preferences) {
+      existingPreferences = profileData.preferences;
       currentState = existingPreferences.gamification as GamificationState || getDefaultGamificationState();
     } else {
       currentState = getDefaultGamificationState();
@@ -148,28 +150,32 @@ async function syncStatsFromDatabase(userId: string, currentState: GamificationS
 
   try {
     // Get expense count
-    const { count: expenseCount } = await supabaseAdmin
+    const { data: expenseData } = await supabaseAdmin
       .from('expenses')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId);
+    const expenseCount = expenseData?.length || 0;
 
     // Get budget count
-    const { count: budgetCount } = await supabaseAdmin
+    const { data: budgetData } = await supabaseAdmin
       .from('budgets')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId);
+    const budgetCount = budgetData?.length || 0;
 
     // Get category count
-    const { count: categoryCount } = await supabaseAdmin
+    const { data: categoryData } = await supabaseAdmin
       .from('categories')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId);
+    const categoryCount = categoryData?.length || 0;
 
     // Get recurring expense count
-    const { count: recurringCount } = await supabaseAdmin
+    const { data: recurringData } = await supabaseAdmin
       .from('recurring_expenses')
-      .select('*', { count: 'exact', head: true })
+      .select('id')
       .eq('user_id', userId);
+    const recurringCount = recurringData?.length || 0;
 
     // Get total mileage
     const { data: mileageData } = await supabaseAdmin
@@ -178,14 +184,15 @@ async function syncStatsFromDatabase(userId: string, currentState: GamificationS
       .eq('user_id', userId)
       .eq('is_business', true);
 
-    const totalMileage = mileageData?.reduce((sum, m) => sum + (m.distance || 0), 0) || 0;
+    const mileageList = (mileageData || []) as any[];
+    const totalMileage = mileageList.reduce((sum, m) => sum + (m.distance || 0), 0);
 
     // Get receipt count (expenses with receipt_url)
-    const { count: receiptCount } = await supabaseAdmin
+    const { data: receiptData } = await supabaseAdmin
       .from('expenses')
-      .select('*', { count: 'exact', head: true })
-      .eq('user_id', userId)
-      .not('receipt_url', 'is', null);
+      .select('id, receipt_url')
+      .eq('user_id', userId);
+    const receiptCount = (receiptData || []).filter((e: any) => e.receipt_url != null).length;
 
     // Get total deductions
     const { data: deductionData } = await supabaseAdmin
@@ -194,10 +201,11 @@ async function syncStatsFromDatabase(userId: string, currentState: GamificationS
       .eq('user_id', userId)
       .eq('is_business', true);
 
-    const totalDeductions = deductionData?.reduce((sum, e) => {
+    const deductionList = (deductionData || []) as any[];
+    const totalDeductions = deductionList.reduce((sum, e) => {
       const percentage = (e.categories as { deduction_percentage?: number })?.deduction_percentage || 0;
       return sum + (e.amount * percentage / 100);
-    }, 0) || 0;
+    }, 0);
 
     // Update stats with real values (use max of stored vs calculated to not lose progress)
     state.stats = {

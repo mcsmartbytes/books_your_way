@@ -84,7 +84,8 @@ export async function GET(request: NextRequest) {
     const vendorData: Record<string, VendorSummary> = {};
 
     // Process expenses
-    for (const expense of expenses || []) {
+    const expenseList = (expenses || []) as any[];
+    for (const expense of expenseList) {
       const amount = parseFloat(expense.amount);
       const date = new Date(expense.date);
       const quarter = getQuarter(date);
@@ -166,8 +167,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Mileage totals
-    const mileageTotalMiles = (mileage || []).reduce((sum, m) => sum + parseFloat(m.distance), 0);
-    const mileageTotalDeduction = (mileage || []).reduce((sum, m) => sum + parseFloat(m.amount), 0);
+    const mileageList = (mileage || []) as any[];
+    const mileageTotalMiles = mileageList.reduce((sum, m) => sum + parseFloat(m.distance), 0);
+    const mileageTotalDeduction = mileageList.reduce((sum, m) => sum + parseFloat(m.amount), 0);
 
     // Add mileage to deductible total
     totalDeductible += mileageTotalDeduction;

@@ -47,7 +47,7 @@ export default function ExpensesDashboardPage() {
         setLoading(false);
         return;
       }
-      setUserId(user.id);
+      setUserId(user.id || null);
 
       const startOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1)
         .toISOString()

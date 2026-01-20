@@ -102,7 +102,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
       .eq('job_id', params.id);
 
     const allTransactions: Transaction[] = [
-      ...(invoicesData || []).map(inv => ({
+      ...(invoicesData || []).map((inv: any) => ({
         id: inv.id,
         type: 'invoice' as const,
         reference: inv.invoice_number,
@@ -111,7 +111,7 @@ export default function JobDetailPage({ params }: { params: { id: string } }) {
         date: inv.issue_date,
         phase_id: null,
       })),
-      ...(billsData || []).map(bill => ({
+      ...(billsData || []).map((bill: any) => ({
         id: bill.id,
         type: 'bill' as const,
         reference: bill.bill_number,

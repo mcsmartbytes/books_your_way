@@ -41,14 +41,15 @@ export async function GET(request: NextRequest) {
     if (currentError) throw currentError;
 
     // Calculate current spent and by category
-    const currentSpent = (currentExpenses || []).reduce(
+    const expenses = (currentExpenses || []) as any[];
+    const currentSpent = expenses.reduce(
       (sum, e) => sum + parseFloat(e.amount),
       0
     );
 
     const currentByCategory: Record<string, number> = {};
-    for (const expense of currentExpenses || []) {
-      const cat = expense.categories as unknown as { name: string } | null;
+    for (const expense of expenses) {
+      const cat = expense.categories as { name: string } | null;
       const catName = cat?.name || 'Uncategorized';
       currentByCategory[catName] = (currentByCategory[catName] || 0) + parseFloat(expense.amount);
     }
@@ -65,8 +66,9 @@ export async function GET(request: NextRequest) {
 
     // Group historical by day
     const dailySpending: Record<string, DailySpending> = {};
-    for (const expense of historicalExpenses || []) {
-      const date = expense.date;
+    const historicalList = (historicalExpenses || []) as any[];
+    for (const expense of historicalList) {
+      const date = expense.date as string;
       if (!dailySpending[date]) {
         dailySpending[date] = { date, total: 0, count: 0 };
       }
@@ -88,7 +90,8 @@ export async function GET(request: NextRequest) {
       .gte('date', lastMonthStart.toISOString().split('T')[0])
       .lte('date', lastMonthEnd.toISOString().split('T')[0]);
 
-    const previousMonthTotal = (lastMonthExpenses || []).reduce(
+    const lastMonthList = (lastMonthExpenses || []) as any[];
+    const previousMonthTotal = lastMonthList.reduce(
       (sum, e) => sum + parseFloat(e.amount),
       0
     );
@@ -103,7 +106,7 @@ export async function GET(request: NextRequest) {
     if (recurError) throw recurError;
 
     const recurringRemaining = calculateRemainingRecurring(
-      (recurring || []) as RecurringExpense[]
+      (recurring || []) as unknown as RecurringExpense[]
     );
 
     // Fetch budgets
@@ -127,12 +130,12 @@ export async function GET(request: NextRequest) {
       })
       .sort((a: any, b: any) => new Date(a.next_due_date).getTime() - new Date(b.next_due_date).getTime());
 
-    forecast.upcoming_recurring = upcomingRecurring as RecurringExpense[];
+    forecast.upcoming_recurring = upcomingRecurring as unknown as RecurringExpense[];
 
     // Generate alerts
     const alerts = generateAlerts(
       forecast,
-      (budgets || []) as Budget[],
+      (budgets || []) as unknown as Budget[],
       currentByCategory,
       previousMonthTotal
     );

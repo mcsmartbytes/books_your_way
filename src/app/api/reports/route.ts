@@ -61,13 +61,16 @@ async function generateProfitLossReport(userId: string, startDate?: string | nul
     .gte('bill_date', start)
     .lte('bill_date', end);
 
-  const totalIncome = (invoices || []).reduce((sum, i) => sum + Number(i.total || 0), 0);
-  const totalExpenses = (bills || []).reduce((sum, b) => sum + Number(b.total || 0), 0);
+  const invoicesList = (invoices || []) as any[];
+  const billsList = (bills || []) as any[];
+
+  const totalIncome = invoicesList.reduce((sum, i) => sum + Number(i.total || 0), 0);
+  const totalExpenses = billsList.reduce((sum, b) => sum + Number(b.total || 0), 0);
   const netProfit = totalIncome - totalExpenses;
 
   // Group expenses by category
   const expensesByCategory: Record<string, number> = {};
-  (bills || []).forEach(b => {
+  billsList.forEach(b => {
     const cat = b.category || 'Uncategorized';
     expensesByCategory[cat] = (expensesByCategory[cat] || 0) + Number(b.total || 0);
   });
@@ -79,11 +82,11 @@ async function generateProfitLossReport(userId: string, startDate?: string | nul
       period: { start, end },
       income: {
         total: totalIncome,
-        invoiceCount: (invoices || []).length,
+        invoiceCount: invoicesList.length,
       },
       expenses: {
         total: totalExpenses,
-        billCount: (bills || []).length,
+        billCount: billsList.length,
         byCategory: expensesByCategory,
       },
       netProfit,
@@ -101,19 +104,22 @@ async function generateBalanceSheetReport(userId: string) {
     supabaseAdmin.from('bills').select('total, amount_paid, status').eq('user_id', userId),
   ]);
 
-  const accountsReceivable = (invoicesResult.data || [])
+  const invoicesData = (invoicesResult.data || []) as any[];
+  const billsData = (billsResult.data || []) as any[];
+
+  const accountsReceivable = invoicesData
     .filter(i => ['sent', 'overdue'].includes(i.status))
     .reduce((sum, i) => sum + (Number(i.total || 0) - Number(i.amount_paid || 0)), 0);
 
-  const accountsPayable = (billsResult.data || [])
+  const accountsPayable = billsData
     .filter(b => ['unpaid', 'overdue'].includes(b.status))
     .reduce((sum, b) => sum + (Number(b.total || 0) - Number(b.amount_paid || 0)), 0);
 
-  const totalRevenue = (invoicesResult.data || [])
+  const totalRevenue = invoicesData
     .filter(i => i.status === 'paid')
     .reduce((sum, i) => sum + Number(i.total || 0), 0);
 
-  const totalExpenses = (billsResult.data || [])
+  const totalExpenses = billsData
     .filter(b => b.status === 'paid')
     .reduce((sum, b) => sum + Number(b.total || 0), 0);
 
@@ -186,6 +192,7 @@ async function generateARReport(userId: string) {
     .order('due_date');
 
   const today = new Date();
+  const invoicesList = (invoices || []) as any[];
   const aging = {
     current: [] as any[],
     days1to30: [] as any[],
@@ -194,7 +201,7 @@ async function generateARReport(userId: string) {
     over90: [] as any[],
   };
 
-  (invoices || []).forEach(inv => {
+  invoicesList.forEach(inv => {
     const dueDate = new Date(inv.due_date);
     const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
     const outstanding = Number(inv.total || 0) - Number(inv.amount_paid || 0);
@@ -241,6 +248,7 @@ async function generateAPReport(userId: string) {
     .order('due_date');
 
   const today = new Date();
+  const billsList = (bills || []) as any[];
   const aging = {
     current: [] as any[],
     days1to30: [] as any[],
@@ -249,7 +257,7 @@ async function generateAPReport(userId: string) {
     over90: [] as any[],
   };
 
-  (bills || []).forEach(bill => {
+  billsList.forEach(bill => {
     const dueDate = new Date(bill.due_date);
     const daysOverdue = Math.floor((today.getTime() - dueDate.getTime()) / (1000 * 60 * 60 * 24));
     const outstanding = Number(bill.total || 0) - Number(bill.amount_paid || 0);
@@ -300,10 +308,11 @@ async function generateCustomerSummary(userId: string, startDate?: string | null
     .lte('issue_date', end);
 
   const customerStats: Record<string, { name: string; totalBilled: number; totalPaid: number; invoiceCount: number }> = {};
+  const invoicesList = (invoices || []) as any[];
 
-  (invoices || []).forEach(inv => {
+  invoicesList.forEach(inv => {
     const custId = inv.customer_id || 'unknown';
-    const custName = (inv.customers as any)?.name || 'Unknown';
+    const custName = inv.customers?.name || 'Unknown';
 
     if (!customerStats[custId]) {
       customerStats[custId] = { name: custName, totalBilled: 0, totalPaid: 0, invoiceCount: 0 };
@@ -348,10 +357,11 @@ async function generateVendorSummary(userId: string, startDate?: string | null, 
     .lte('bill_date', end);
 
   const vendorStats: Record<string, { name: string; totalBilled: number; totalPaid: number; billCount: number }> = {};
+  const billsList = (bills || []) as any[];
 
-  (bills || []).forEach(bill => {
+  billsList.forEach(bill => {
     const vendId = bill.vendor_id || 'unknown';
-    const vendName = (bill.vendors as any)?.name || 'Unknown';
+    const vendName = bill.vendors?.name || 'Unknown';
 
     if (!vendorStats[vendId]) {
       vendorStats[vendId] = { name: vendName, totalBilled: 0, totalPaid: 0, billCount: 0 };

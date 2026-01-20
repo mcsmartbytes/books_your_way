@@ -44,7 +44,7 @@ export default function JobsPage() {
       .order('created_at', { ascending: false });
 
     if (!error && jobsData) {
-      const mappedJobs = jobsData.map(job => ({
+      const mappedJobs = jobsData.map((job: any) => ({
         ...job,
         customer_name: job.customers?.name || 'No Customer'
       }));

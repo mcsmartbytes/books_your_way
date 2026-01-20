@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
       .single();
 
     if (billError) throw billError;
+    if (!bill) throw new Error('Failed to create bill');
 
     // Create bill items
     if (items && items.length > 0) {

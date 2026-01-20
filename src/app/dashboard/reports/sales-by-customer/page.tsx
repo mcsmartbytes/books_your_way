@@ -100,7 +100,7 @@ export default function SalesByCustomerPage() {
 
     const customerMap = new Map<string, CustomerSales>();
 
-    invoicesData.forEach(invoice => {
+    invoicesData.forEach((invoice: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const customerData = invoice.customers as any;
       const customer = customerData && !Array.isArray(customerData) ? customerData as { id: string; name: string; email: string } : null;

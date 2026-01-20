@@ -88,14 +88,14 @@ export default function BalanceSheetPage() {
       .lte('bill_date', asOfDate);
 
     // Calculate totals
-    const totalIncome = invoicesData?.reduce((sum, inv) => sum + (inv.total || 0), 0) || 0;
-    const totalExpenses = billsData?.reduce((sum, bill) => sum + (bill.total || 0), 0) || 0;
+    const totalIncome = invoicesData?.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) || 0;
+    const totalExpenses = billsData?.reduce((sum: number, bill: any) => sum + (bill.total || 0), 0) || 0;
     const retainedEarnings = totalIncome - totalExpenses;
 
-    const accountsReceivable = unpaidInvoices?.reduce((sum, inv) =>
+    const accountsReceivable = unpaidInvoices?.reduce((sum: number, inv: any) =>
       sum + ((inv.total || 0) - (inv.amount_paid || 0)), 0) || 0;
 
-    const accountsPayable = unpaidBills?.reduce((sum, bill) =>
+    const accountsPayable = unpaidBills?.reduce((sum: number, bill: any) =>
       sum + ((bill.total || 0) - (bill.amount_paid || 0)), 0) || 0;
 
     // Categorize accounts
@@ -103,7 +103,7 @@ export default function BalanceSheetPage() {
     const liabilities: AccountBalance[] = [];
     const equity: AccountBalance[] = [];
 
-    accountsData.forEach(account => {
+    accountsData.forEach((account: any) => {
       const balance: AccountBalance = {
         id: account.id,
         code: account.code,

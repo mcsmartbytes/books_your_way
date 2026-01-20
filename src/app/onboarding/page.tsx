@@ -78,7 +78,7 @@ export default function OnboardingPage() {
       if (categoriesError) throw categoriesError;
 
       // Create default chart of accounts based on industry
-      const defaultAccounts = getDefaultAccounts(session.user.id);
+      const defaultAccounts = getDefaultAccounts(session.user.id as string);
       const { error: accountsError } = await supabase
         .from('accounts')
         .insert(defaultAccounts);

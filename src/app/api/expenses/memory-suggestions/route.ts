@@ -41,7 +41,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch price history' }, { status: 500 });
     }
 
-    if (!priceHistory || priceHistory.length === 0) {
+    const priceHistoryList = (priceHistory || []) as any[];
+    if (priceHistoryList.length === 0) {
       return NextResponse.json({
         success: true,
         memories: [],
@@ -51,8 +52,8 @@ export async function GET(request: NextRequest) {
     }
 
     // Process into memories
-    const itemMemories = processItemMemories(priceHistory);
-    const vendorMemories = processVendorMemories(priceHistory);
+    const itemMemories = processItemMemories(priceHistoryList);
+    const vendorMemories = processVendorMemories(priceHistoryList);
 
     // Handle different modes
     if (mode === 'all') {
@@ -190,7 +191,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Failed to fetch price history' }, { status: 500 });
     }
 
-    if (!priceHistory || priceHistory.length === 0) {
+    const priceHistoryList2 = (priceHistory || []) as any[];
+    if (priceHistoryList2.length === 0) {
       return NextResponse.json({
         success: true,
         memories: {},
@@ -200,8 +202,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Process memories
-    const itemMemories = processItemMemories(priceHistory);
-    const vendorMemories = processVendorMemories(priceHistory);
+    const itemMemories = processItemMemories(priceHistoryList2);
+    const vendorMemories = processVendorMemories(priceHistoryList2);
 
     // Get vendor memory
     let vendorMemory: VendorMemory | undefined;

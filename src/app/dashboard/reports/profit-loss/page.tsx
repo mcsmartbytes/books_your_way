@@ -98,11 +98,11 @@ export default function ProfitLossReportPage() {
       .lte('bill_date', endDate);
 
     // Group income (for now, simple totals - in production would use categories)
-    const totalIncome = invoicesData?.reduce((sum, inv) => sum + (inv.total || 0), 0) || 0;
+    const totalIncome = invoicesData?.reduce((sum: number, inv: any) => sum + (inv.total || 0), 0) || 0;
 
     // Group expenses by category
     const expensesByCategory: Record<string, number> = {};
-    billsData?.forEach(bill => {
+    billsData?.forEach((bill: any) => {
       const cat = bill.category || 'Other Expenses';
       expensesByCategory[cat] = (expensesByCategory[cat] || 0) + (bill.total || 0);
     });

@@ -90,7 +90,7 @@ export default function NewEstimatePage() {
 
     const customerId = searchParams.get('customer');
     if (customerId && customersData) {
-      const customer = customersData.find(c => c.id === customerId);
+      const customer = customersData.find((c: Customer) => c.id === customerId);
       if (customer) {
         setSelectedCustomer(customer);
         setCustomerSearch(customer.name);

@@ -41,7 +41,7 @@ export default function EstimatesPage() {
       .order('created_at', { ascending: false });
 
     if (!error && estimatesData) {
-      const mapped = estimatesData.map(est => ({
+      const mapped = estimatesData.map((est: any) => ({
         ...est,
         customer_name: est.customers?.name || 'No Customer'
       }));

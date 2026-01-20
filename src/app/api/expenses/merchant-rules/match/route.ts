@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
 
     if (error) throw error;
 
-    if (!rules || rules.length === 0) {
+    const rulesList = (rules || []) as any[];
+    if (rulesList.length === 0) {
       return NextResponse.json({
         success: true,
         match: null,
@@ -55,7 +56,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Find first matching rule
-    for (const rule of rules) {
+    for (const rule of rulesList) {
       if (matchesPattern(vendor, rule.merchant_pattern, rule.match_type)) {
         // Increment match count in background (don't wait)
         supabaseAdmin

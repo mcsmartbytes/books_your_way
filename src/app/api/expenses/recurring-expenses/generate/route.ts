@@ -27,7 +27,8 @@ export async function POST(request: NextRequest) {
 
     if (fetchError) throw fetchError;
 
-    if (!dueExpenses || dueExpenses.length === 0) {
+    const dueExpensesList = (dueExpenses || []) as any[];
+    if (dueExpensesList.length === 0) {
       return NextResponse.json({
         success: true,
         generated: 0,
@@ -37,7 +38,7 @@ export async function POST(request: NextRequest) {
 
     const generatedExpenses = [];
 
-    for (const recurring of dueExpenses) {
+    for (const recurring of dueExpensesList) {
       // Create the expense
       const { data: newExpense, error: insertError } = await supabaseAdmin
         .from('expenses')

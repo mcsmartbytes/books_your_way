@@ -68,7 +68,7 @@ export default function APAgingPage() {
 
     const summary: AgingBucket = { current: 0, days30: 0, days60: 0, days90: 0, over90: 0, total: 0 };
 
-    billsData.forEach(bill => {
+    billsData.forEach((bill: any) => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const vendorData = bill.vendors as any;
       const vendor = vendorData && !Array.isArray(vendorData) ? vendorData as { id: string; name: string; email: string } : null;

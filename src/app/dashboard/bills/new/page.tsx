@@ -100,7 +100,7 @@ export default function NewBillPage() {
     // Check if vendor is pre-selected from URL
     const vendorId = searchParams.get('vendor');
     if (vendorId && vendorData) {
-      const vendor = vendorData.find(v => v.id === vendorId);
+      const vendor = vendorData.find((v: Vendor) => v.id === vendorId);
       if (vendor) {
         setSelectedVendor(vendor);
         setVendorSearch(vendor.name);
@@ -185,12 +185,14 @@ export default function NewBillPage() {
         .single();
 
       if (billError) throw billError;
+      if (!billData) throw new Error('Failed to create bill');
+      const bill = billData as any;
 
       // Create bill items
       const billItems = lineItems
         .filter(item => item.description.trim())
         .map(item => ({
-          bill_id: billData.id,
+          bill_id: bill.id,
           description: item.description,
           quantity: item.quantity,
           rate: item.rate,

@@ -52,15 +52,17 @@ export async function GET(request: NextRequest) {
 
     if (error) throw error;
 
+    const historyList = (history || []) as any[];
+
     if (mode === 'history') {
-      return NextResponse.json({ success: true, data: history || [] });
+      return NextResponse.json({ success: true, data: historyList });
     }
 
     // Calculate trends
     if (mode === 'trends') {
       // Group by item name
       const grouped = new Map<string, any[]>();
-      for (const item of history || []) {
+      for (const item of historyList) {
         const key = item.item_name_normalized;
         if (!grouped.has(key)) {
           grouped.set(key, []);
@@ -101,9 +103,11 @@ export async function GET(request: NextRequest) {
         .gte('purchase_date', thirtyDaysAgo.toISOString().split('T')[0])
         .order('purchase_date', { ascending: false });
 
+      const recentHistoryList = (recentHistory || []) as any[];
+
       // Group all history by item
       const grouped = new Map<string, any[]>();
-      for (const item of history || []) {
+      for (const item of historyList) {
         const key = item.item_name_normalized;
         if (!grouped.has(key)) {
           grouped.set(key, []);
@@ -113,7 +117,7 @@ export async function GET(request: NextRequest) {
 
       // Find items with significant price changes
       const alerts: any[] = [];
-      for (const item of recentHistory || []) {
+      for (const item of recentHistoryList) {
         const itemHistory = grouped.get(item.item_name_normalized) || [];
         if (itemHistory.length < 2) continue;
 
@@ -157,9 +161,11 @@ export async function GET(request: NextRequest) {
 
       if (historyError) throw historyError;
 
+      const allHistoryList = (allHistory || []) as any[];
+
       // Group by item name
       const grouped = new Map<string, any[]>();
-      for (const item of allHistory || []) {
+      for (const item of allHistoryList) {
         const key = item.item_name_normalized;
         if (!grouped.has(key)) {
           grouped.set(key, []);

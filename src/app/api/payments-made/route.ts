@@ -73,8 +73,9 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (bill) {
-        const newAmountPaid = (bill.amount_paid || 0) + amount;
-        const newStatus = newAmountPaid >= bill.total ? 'paid' : 'unpaid';
+        const billData = bill as any;
+        const newAmountPaid = (billData.amount_paid || 0) + amount;
+        const newStatus = newAmountPaid >= billData.total ? 'paid' : 'unpaid';
 
         await supabaseAdmin
           .from('bills')
@@ -92,9 +93,10 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (vendor) {
+        const vendorData = vendor as any;
         await supabaseAdmin
           .from('vendors')
-          .update({ balance: (vendor.balance || 0) - amount })
+          .update({ balance: (vendorData.balance || 0) - amount })
           .eq('id', vendor_id);
       }
     }
@@ -128,6 +130,7 @@ export async function DELETE(request: NextRequest) {
     if (!payment) {
       return NextResponse.json({ error: 'Payment not found' }, { status: 404 });
     }
+    const paymentData = payment as any;
 
     // Delete payment
     const { error } = await supabaseAdmin
@@ -139,21 +142,22 @@ export async function DELETE(request: NextRequest) {
     if (error) throw error;
 
     // Reverse bill amount_paid if linked
-    if (payment.bill_id) {
+    if (paymentData.bill_id) {
       const { data: bill } = await supabaseAdmin
         .from('bills')
         .select('amount_paid, total')
-        .eq('id', payment.bill_id)
+        .eq('id', paymentData.bill_id)
         .single();
 
       if (bill) {
-        const newAmountPaid = Math.max(0, (bill.amount_paid || 0) - payment.amount);
-        const newStatus = newAmountPaid >= bill.total ? 'paid' : 'unpaid';
+        const billData = bill as any;
+        const newAmountPaid = Math.max(0, (billData.amount_paid || 0) - paymentData.amount);
+        const newStatus = newAmountPaid >= billData.total ? 'paid' : 'unpaid';
 
         await supabaseAdmin
           .from('bills')
           .update({ amount_paid: newAmountPaid, status: newStatus })
-          .eq('id', payment.bill_id);
+          .eq('id', paymentData.bill_id);
       }
     }
 

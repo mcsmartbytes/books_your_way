@@ -118,7 +118,8 @@ export async function POST(request: NextRequest) {
         .single();
 
       if (!upsertError && upserted) {
-        upsertResults.push(upserted);
+        const upsertedRecord = upserted as any;
+        upsertResults.push(upsertedRecord);
 
         // Track price changes
         const priceChanges = detectPriceChanges(sub);
@@ -129,7 +130,7 @@ export async function POST(request: NextRequest) {
 
           await supabaseAdmin.from('subscription_price_history').upsert(
             {
-              subscription_id: upserted.id,
+              subscription_id: upsertedRecord.id,
               user_id,
               amount: change.new_amount,
               detected_date: change.detected_date,
