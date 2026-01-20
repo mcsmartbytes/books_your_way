@@ -368,7 +368,7 @@ export function checkAchievements(state: GamificationState): AchievementId[] {
 export function awardXP(
   state: GamificationState,
   amount: number,
-  reason: keyof typeof XP_AWARDS
+  _reason: keyof typeof XP_AWARDS
 ): {
   newXP: number;
   leveledUp: boolean;

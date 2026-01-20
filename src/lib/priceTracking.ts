@@ -81,7 +81,7 @@ export function calculatePriceTrend(
     : 0;
 
   // Get unique vendors
-  const vendors = [...new Set(sorted.map(h => h.vendor).filter(Boolean))];
+  const vendors = Array.from(new Set(sorted.map(h => h.vendor).filter(Boolean)));
 
   return {
     item_name: itemName,
@@ -240,7 +240,7 @@ export function findBestPrice(
 // Format price change for display
 export function formatPriceChange(change: number, pct: number): string {
   const arrow = pct > 0 ? '↑' : pct < 0 ? '↓' : '→';
-  const color = pct > 0 ? 'text-red-500' : pct < 0 ? 'text-green-500' : 'text-gray-500';
+  const _color = pct > 0 ? 'text-red-500' : pct < 0 ? 'text-green-500' : 'text-gray-500';
   const absChange = Math.abs(change);
   const absPct = Math.abs(pct);
 
@@ -317,7 +317,7 @@ export function getVendorPricesForItem(
 
   const vendorData: VendorPriceData[] = [];
 
-  for (const [vendorNorm, entries] of vendorMap) {
+  Array.from(vendorMap.entries()).forEach(([vendorNorm, entries]) => {
     const prices = entries.map(e => e.unit_price);
     const sorted = [...entries].sort(
       (a, b) => new Date(b.purchase_date).getTime() - new Date(a.purchase_date).getTime()
@@ -333,7 +333,7 @@ export function getVendorPricesForItem(
       last_purchase: sorted[0].purchase_date,
       total_spent: entries.reduce((sum, e) => sum + (e.unit_price * e.quantity), 0),
     });
-  }
+  });
 
   // Sort by avg_price ascending (best prices first)
   return vendorData.sort((a, b) => a.avg_price - b.avg_price);
@@ -489,7 +489,7 @@ export function calculateVendorRankings(
   // Convert to array and calculate avg rank
   const rankings: VendorRanking[] = [];
 
-  for (const stats of vendorStats.values()) {
+  Array.from(vendorStats.values()).forEach((stats) => {
     const avgRank = stats.price_ranks.length > 0
       ? stats.price_ranks.reduce((a, b) => a + b, 0) / stats.price_ranks.length
       : 0;
@@ -504,7 +504,7 @@ export function calculateVendorRankings(
       potential_savings_if_switched: stats.potential_savings,
       total_purchases: stats.total_purchases,
     });
-  }
+  });
 
   // Sort by avg_price_rank (lower is better)
   return rankings.sort((a, b) => a.avg_price_rank - b.avg_price_rank);

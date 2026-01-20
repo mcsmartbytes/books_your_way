@@ -175,7 +175,7 @@ export default function ExpensesPage() {
       } : e));
 
       setEditingExpense(null);
-    } catch (err) {
+    } catch {
       alert('Failed to save changes');
     } finally {
       setSaving(false);
@@ -188,7 +188,7 @@ export default function ExpensesPage() {
       const { error } = await expensesSupabase.from('expenses').delete().eq('id', id);
       if (error) throw error;
       setExpenses(prev => prev.filter(e => e.id !== id));
-    } catch (err) {
+    } catch {
       alert('Failed to delete expense');
     }
   }

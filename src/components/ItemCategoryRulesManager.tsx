@@ -66,8 +66,8 @@ export default function ItemCategoryRulesManager() {
         .eq('user_id', user.id)
         .order('name');
       setCategories(cats || []);
-    } catch (error) {
-      console.error('Error loading data:', error);
+    } catch {
+      console.error('Error loading data');
     } finally {
       setLoading(false);
     }
@@ -143,7 +143,7 @@ export default function ItemCategoryRulesManager() {
       } else {
         setMessage({ type: 'error', text: data.error || 'Failed to save rule' });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'An error occurred' });
     } finally {
       setSaving(false);
@@ -160,7 +160,7 @@ export default function ItemCategoryRulesManager() {
         setRules(rules.filter(r => r.id !== ruleId));
         setMessage({ type: 'success', text: 'Rule deleted' });
       }
-    } catch (error) {
+    } catch {
       setMessage({ type: 'error', text: 'Failed to delete rule' });
     }
   }
@@ -176,8 +176,8 @@ export default function ItemCategoryRulesManager() {
       if (data.success) {
         setRules(rules.map(r => r.id === rule.id ? { ...r, is_active: !r.is_active } : r));
       }
-    } catch (error) {
-      console.error('Error toggling rule:', error);
+    } catch {
+      console.error('Error toggling rule');
     }
   }
 

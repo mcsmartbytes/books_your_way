@@ -54,8 +54,8 @@ export function normalizeVendor(vendor: string): string {
 // Convert OCR line items to database format
 export function convertOCRLineItems(
   ocrItems: OCRLineItem[],
-  expenseId: string,
-  userId: string
+  _expenseId: string,
+  _userId: string
 ): LineItem[] {
   return ocrItems.map((item, index) => ({
     item_name: item.name,

@@ -128,7 +128,7 @@ export function calculateVariances(
   }
 
   // Add categories that existed in previous but not in current
-  for (const [_, prev] of previousMap) {
+  Array.from(previousMap.values()).forEach((prev) => {
     variances.push({
       category_id: prev.category_id,
       category_name: prev.category_name,
@@ -139,7 +139,7 @@ export function calculateVariances(
       change_percent: -100,
       count_change: -prev.count,
     });
-  }
+  });
 
   return variances;
 }

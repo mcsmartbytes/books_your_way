@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
     const currentTotal = (currentExpenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
     const previousTotal = (previousExpenses || []).reduce((sum, e) => sum + Number(e.amount), 0);
     const currentBusiness = (currentExpenses || []).filter(e => e.is_business).reduce((sum, e) => sum + Number(e.amount), 0);
-    const previousBusiness = (previousExpenses || []).filter(e => e.is_business).reduce((sum, e) => sum + Number(e.amount), 0);
+    const _previousBusiness = (previousExpenses || []).filter(e => e.is_business).reduce((sum, e) => sum + Number(e.amount), 0);
 
     // Calculate by category
     const currentByCategory = new Map<string, { amount: number; name: string }>();

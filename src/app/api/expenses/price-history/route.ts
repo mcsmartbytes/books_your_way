@@ -70,12 +70,12 @@ export async function GET(request: NextRequest) {
 
       // Calculate trend for each item
       const trends: PriceTrend[] = [];
-      for (const [itemName, items] of grouped) {
+      Array.from(grouped.entries()).forEach(([itemName, items]) => {
         const trend = calculatePriceTrend(items, itemName);
         if (trend) {
           trends.push(trend);
         }
-      }
+      });
 
       return NextResponse.json({
         success: true,
@@ -171,7 +171,7 @@ export async function GET(request: NextRequest) {
       const comparisons: ItemVendorComparison[] = [];
       const opportunities: SavingsOpportunity[] = [];
 
-      for (const [itemNameNorm, items] of grouped) {
+      Array.from(grouped.entries()).forEach(([itemNameNorm, items]) => {
         // Only compare items purchased from multiple vendors
         const uniqueVendors = new Set(items.map(i => i.vendor_normalized));
 
@@ -192,7 +192,7 @@ export async function GET(request: NextRequest) {
             opportunities.push(opportunity);
           }
         }
-      }
+      });
 
       // Calculate vendor rankings
       const vendorRankings = calculateVendorRankings(comparisons);

@@ -7,6 +7,32 @@ import {
   CategorySpending,
 } from '@/lib/analytics';
 
+// Helper function to group expenses by category
+function groupByCategory(expenses: any[]): CategorySpending[] {
+  const grouped: Record<string, CategorySpending> = {};
+
+  for (const expense of expenses) {
+    const catId = expense.category_id || 'uncategorized';
+    const catName = expense.categories?.name || 'Uncategorized';
+    const catIcon = expense.categories?.icon || '📦';
+
+    if (!grouped[catId]) {
+      grouped[catId] = {
+        category_id: catId,
+        category_name: catName,
+        category_icon: catIcon,
+        total: 0,
+        count: 0,
+      };
+    }
+
+    grouped[catId].total += parseFloat(expense.amount);
+    grouped[catId].count += 1;
+  }
+
+  return Object.values(grouped);
+}
+
 // GET - analyze spending changes for a user
 export async function GET(request: NextRequest) {
   try {
@@ -45,32 +71,6 @@ export async function GET(request: NextRequest) {
       .lte('date', previousRange.end.toISOString().split('T')[0]);
 
     if (previousError) throw previousError;
-
-    // Group by category
-    function groupByCategory(expenses: any[]): CategorySpending[] {
-      const grouped: Record<string, CategorySpending> = {};
-
-      for (const expense of expenses) {
-        const catId = expense.category_id || 'uncategorized';
-        const catName = expense.categories?.name || 'Uncategorized';
-        const catIcon = expense.categories?.icon || '📦';
-
-        if (!grouped[catId]) {
-          grouped[catId] = {
-            category_id: catId,
-            category_name: catName,
-            category_icon: catIcon,
-            total: 0,
-            count: 0,
-          };
-        }
-
-        grouped[catId].total += parseFloat(expense.amount);
-        grouped[catId].count += 1;
-      }
-
-      return Object.values(grouped);
-    }
 
     const currentGrouped = groupByCategory(currentExpenses || []);
     const previousGrouped = groupByCategory(previousExpenses || []);

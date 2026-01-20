@@ -5,7 +5,6 @@ import {
   detectPriceChanges,
   calculateMonthlyCost,
   findDuplicates,
-  DetectedSubscription,
 } from '@/lib/subscriptionDetection';
 
 // POST - Run subscription detection on user's expenses

@@ -261,7 +261,7 @@ export function processItemMemories(
       vendorGroups.get(vendorNorm)!.push(item);
     });
 
-    const allVendors = Array.from(vendorGroups.entries()).map(([vendorNorm, vendorItems]) => {
+    const allVendors = Array.from(vendorGroups.entries()).map(([_vendorNorm, vendorItems]) => {
       const vendorPrices = vendorItems.map(i => i.unit_price);
       return {
         vendor: vendorItems[0].vendor, // Use original vendor name

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { ACHIEVEMENTS, LEVELS, getAchievementProgress } from '@/lib/gamification';
+import { LEVELS } from '@/lib/gamification';
 
 interface Achievement {
   id: string;
@@ -187,7 +187,7 @@ export default function AchievementsGallery({ userId }: AchievementsGalleryProps
           {LEVELS.map((level, idx) => {
             const isCurrentLevel = summary?.level === level.level;
             const isPastLevel = summary && summary.level > level.level;
-            const isFutureLevel = summary && summary.level < level.level;
+            const _isFutureLevel = summary && summary.level < level.level;
 
             return (
               <div key={level.level} className="flex items-center">

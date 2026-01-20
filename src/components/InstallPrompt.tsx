@@ -91,8 +91,8 @@ export default function InstallPrompt() {
                 <li>Tap the <span className="inline-flex items-center bg-white/20 px-1.5 py-0.5 rounded">
                   <svg className="w-4 h-4" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L12 14M12 2L8 6M12 2L16 6M4 14L4 20C4 21.1 4.9 22 6 22L18 22C19.1 22 20 21.1 20 20L20 14" stroke="currentColor" strokeWidth="2" fill="none"/></svg>
                 </span> Share button</li>
-                <li>Scroll and tap <strong>"Add to Home Screen"</strong></li>
-                <li>Tap <strong>"Add"</strong></li>
+                <li>Scroll and tap <strong>&quot;Add to Home Screen&quot;</strong></li>
+                <li>Tap <strong>&quot;Add&quot;</strong></li>
               </ol>
             </div>
           ) : (

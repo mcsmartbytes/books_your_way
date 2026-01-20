@@ -63,7 +63,7 @@ export default function PredictiveAlerts() {
   }
 
   function dismissAlert(alertId: string) {
-    setDismissedAlerts((prev) => new Set([...prev, alertId]));
+    setDismissedAlerts((prev) => new Set([...Array.from(prev), alertId]));
   }
 
   if (loading) {

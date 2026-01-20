@@ -29,6 +29,15 @@ const navItems = [
   { href: '/dashboard/settings', label: 'Settings', icon: 'M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z' },
 ];
 
+// Expense Tools - sub-navigation for expense features
+const expenseToolItems = [
+  { href: '/dashboard/expenses/dashboard', label: 'Insights Dashboard', icon: 'M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z' },
+  { href: '/dashboard/expenses/budgets', label: 'Budgets', icon: 'M11 3.055A9.001 9.001 0 1020.945 13H11V3.055z M20.488 9H15V3.512A9.025 9.025 0 0120.488 9z' },
+  { href: '/dashboard/expenses/mileage', label: 'Mileage Tracker', icon: 'M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7' },
+  { href: '/dashboard/expenses/subscriptions', label: 'Subscriptions', icon: 'M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15' },
+  { href: '/dashboard/expenses/price-tracker', label: 'Price Tracker', icon: 'M7 12l3-3 3 3 4-4M8 21l4-4 4 4M3 4h18M4 4h16v12a1 1 0 01-1 1H5a1 1 0 01-1-1V4z' },
+];
+
 // Integration apps - shown separately with different styling (expenses moved to main nav)
 const integrationItems: { href: string; label: string; icon: string; color: string }[] = [];
 
@@ -139,35 +148,66 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               );
             })}
 
+            {/* Expense Tools Section */}
+            {pathname.startsWith('/dashboard/expenses') && (
+              <div className="pt-4 mt-4 border-t border-corporate-navy">
+                <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Expense Tools
+                </p>
+                {expenseToolItems.map((item) => {
+                  const isActive = pathname === item.href;
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-2.5 rounded-lg transition-all duration-200 text-sm ${
+                        isActive
+                          ? 'bg-green-600 text-white'
+                          : 'text-gray-400 hover:bg-corporate-navy hover:text-white'
+                      }`}
+                    >
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                      </svg>
+                      <span className="font-medium">{item.label}</span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
+
             {/* Integrations Section */}
-            <div className="pt-4 mt-4 border-t border-corporate-navy">
-              <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                Integrations
-              </p>
-              {integrationItems.map((item) => {
-                const isActive = pathname === item.href || pathname.startsWith(item.href);
-                return (
-                  <Link
-                    key={item.href}
-                    href={item.href}
-                    onClick={() => setSidebarOpen(false)}
-                    className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
-                      isActive
-                        ? 'bg-primary-600 text-white'
-                        : 'text-gray-300 hover:bg-corporate-navy hover:text-white'
-                    }`}
-                  >
-                    <svg className={`w-5 h-5 ${!isActive ? item.color : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
-                    </svg>
-                    <span className="font-medium">{item.label}</span>
-                    <span className={`ml-auto px-1.5 py-0.5 text-[10px] rounded ${isActive ? 'bg-white/20' : 'bg-corporate-navy'}`}>
-                      APP
-                    </span>
-                  </Link>
-                );
-              })}
-            </div>
+            {integrationItems.length > 0 && (
+              <div className="pt-4 mt-4 border-t border-corporate-navy">
+                <p className="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                  Integrations
+                </p>
+                {integrationItems.map((item) => {
+                  const isActive = pathname === item.href || pathname.startsWith(item.href);
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 ${
+                        isActive
+                          ? 'bg-primary-600 text-white'
+                          : 'text-gray-300 hover:bg-corporate-navy hover:text-white'
+                      }`}
+                    >
+                      <svg className={`w-5 h-5 ${!isActive ? item.color : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d={item.icon} />
+                      </svg>
+                      <span className="font-medium">{item.label}</span>
+                      <span className={`ml-auto px-1.5 py-0.5 text-[10px] rounded ${isActive ? 'bg-white/20' : 'bg-corporate-navy'}`}>
+                        APP
+                      </span>
+                    </Link>
+                  );
+                })}
+              </div>
+            )}
           </nav>
 
           {/* User section */}

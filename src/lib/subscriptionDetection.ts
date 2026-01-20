@@ -219,12 +219,12 @@ export function detectSubscriptions(expenses: ExpenseForDetection[]): DetectedSu
 
     let topCategory: { id: string; name: string } | undefined;
     let maxCount = 0;
-    for (const cat of categoryCount.values()) {
+    Array.from(categoryCount.values()).forEach((cat) => {
       if (cat.count > maxCount) {
         maxCount = cat.count;
         topCategory = { id: cat.id, name: cat.name };
       }
-    }
+    });
 
     subscriptions.push({
       vendor: sorted[0].vendor, // Original vendor name
